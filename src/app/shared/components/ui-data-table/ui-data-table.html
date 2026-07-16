@@ -1,0 +1,162 @@
+<div class="overflow-x-auto">
+
+  <table class="min-w-full overflow-hidden rounded-lg">
+    <!-- HEADER -->
+    <thead>
+      <tr>
+        @for (column of columns(); track column.key) {
+          <th
+            class="border-b border-gray-200 bg-gray-50 px-4 py-3">
+
+            @if (column.filter?.type === 'text') {
+
+              <input
+              appUppercase
+              type="text"
+              [placeholder]="column.filter?.placeholder || column.title"
+              class="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm outline-none focus:border-green-500 focus:ring-2 focus:ring-green-100"
+              (input)="onTextFilterChange(column.key.toString(), $event)"
+            />
+
+            } @else if (column.filter?.type === 'select') {
+
+              <select
+                class="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm outline-none focus:border-green-500 focus:ring-2 focus:ring-green-100"
+                (change)="onFilterChange(column.key.toString(), $event)"
+              >
+
+                @for (
+                  option of column.filter?.options ?? [];
+                  track option.value
+                ) {
+
+                  <option [value]="option.value">
+
+                    {{ option.label }}
+
+                  </option>
+
+                }
+
+              </select>
+
+            } @else {
+
+              {{ column.title }}
+
+            }
+
+          </th>
+
+        }
+
+        @if (actions().length > 0) {
+
+          <th
+            class="w-24 border-b border-gray-200 bg-gray-50 px-4 py-3 text-center text-sm font-semibold text-gray-700"
+          >
+            Acciones
+          </th>
+
+        }
+
+      </tr>
+
+    </thead>
+
+    <!-- BODY -->
+
+    <tbody>
+      @if (data().length === 0) {
+
+      <tr>
+        <td [attr.colspan]="columns().length + (actions().length > 0 ? 1 : 0)">
+
+        <app-ui-empty-state
+          title="No se encontraron registros"
+          description="Intenta modificar los filtros de búsqueda."
+        />
+        </td>
+      </tr>
+      }
+
+
+
+      @for (row of data(); track row.id) {
+
+        <tr
+          class="border-b border-gray-100 odd:bg-white even:bg-gray-50/40 hover:bg-green-50 transition-colors"
+        >
+
+          @for (column of columns(); track column.key) {
+
+            <td
+              class="px-4 py-3 text-sm text-gray-700 align-middle"
+            >
+
+              @if (column.template) {
+
+                <ng-container
+                  *ngTemplateOutlet="
+                    column.template;
+                    context: {
+                      $implicit: row,
+                      value: row[column.key]
+                    }
+                  "
+                />
+
+              } @else {
+
+                {{ row[column.key] }}
+
+              }
+
+            </td>
+
+          }
+
+          @if (actions().length > 0) {
+
+            <td
+              class="px-4 py-3 text-center"
+            >
+
+              <app-action-menu
+                [row]="row"
+                [actions]="actions()"
+                (actionClick)="onAction($event)"
+              />
+
+            </td>
+
+          }
+
+        </tr>
+
+      }
+
+      @if (data().length === 0) {
+
+        <tr>
+
+          <td
+            [attr.colspan]="columns().length + (actions().length > 0 ? 1 : 0)"
+          >
+
+            <app-ui-empty-state
+              title="No se encontraron registros"
+              description="Intenta modificar los filtros de búsqueda."
+            />
+
+          </td>
+
+        </tr>
+
+      }
+
+    </tbody>
+
+  </table>
+
+</div>

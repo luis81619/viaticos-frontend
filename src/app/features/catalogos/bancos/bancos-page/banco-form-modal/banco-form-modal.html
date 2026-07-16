@@ -1,0 +1,53 @@
+<app-ui-modal
+  [isOpen]="isOpen()"
+  [title]="banco() ? 'Editar Banco' : 'Nuevo Banco'"
+  (close)="onCancel()"
+  [size]="'md'"
+>
+
+  <form
+    [formGroup]="form"
+    (ngSubmit)="onSubmit()"
+    autocomplete="off"
+    class="flex flex-col gap-4"
+  >
+
+    <app-ui-form-text-input
+      label="Nombre del banco"
+      placeholder="EJ. BBVA"
+      [control]="form.controls.nombre"
+    />
+
+    <app-ui-form-select-input
+      label="Estatus"
+      placeholder="Seleccione un estatus"
+      [control]="form.controls.isActive"
+      [options]="statusOptions"
+    />
+
+    <div
+      class="mt-6 flex justify-end gap-2 border-t border-gray-200 pt-4"
+    >
+
+    <app-ui-button
+      variant="secondary"
+      type="button"
+      [disabled]="isSaving()"
+      (click)="onCancel()"
+    >
+      Cancelar
+    </app-ui-button>
+
+    <app-ui-button
+      type="submit"
+      [loading]="isSaving()"
+      [disabled]="isSaving()"
+    >
+      {{ banco() ? 'Actualizar' : 'Guardar' }}
+    </app-ui-button>
+
+    </div>
+
+  </form>
+
+</app-ui-modal>

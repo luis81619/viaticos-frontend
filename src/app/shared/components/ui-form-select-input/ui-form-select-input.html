@@ -1,0 +1,39 @@
+<div class="space-y-1.5">
+
+  <div class="relative">
+
+    <select
+      [formControl]="control()"
+      class="peer w-full rounded-lg border bg-white px-3 pb-2 pt-6 text-sm outline-none transition focus:border-green-500 focus:ring-2 focus:ring-green-100"
+      [class.border-red-300]="showError()"
+      [class.border-gray-300]="!showError()"
+      (blur)="control().markAsTouched()"
+    >
+
+      <option value="">
+        {{ placeholder() }}
+      </option>
+
+      @for (option of options(); track option.value) {
+        <option [ngValue]="option.value">
+          {{ option.label }}
+        </option>
+      }
+
+    </select>
+
+    <label
+      class="pointer-events-none absolute left-3 top-2 text-xs text-gray-500 transition-all peer-focus:text-green-600"
+    >
+      {{ finalLabel() }}
+    </label>
+
+  </div>
+
+  @if (showError()) {
+    <p class="text-xs text-red-600">
+      {{ getErrorMessage() }}
+    </p>
+  }
+
+</div>

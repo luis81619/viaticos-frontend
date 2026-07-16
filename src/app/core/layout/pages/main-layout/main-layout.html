@@ -1,0 +1,33 @@
+<div class="h-screen overflow-hidden bg-gray-100">
+
+  <app-sidebar
+    [isCollapsed]="isSidebarCollapsed()"
+  />
+
+  <div
+    class="h-screen flex flex-col transition-all duration-300"
+    [class.ml-64]="!isSidebarCollapsed()"
+    [class.ml-20]="isSidebarCollapsed()"
+  >
+
+    <app-header
+      (toggleSidebar)="toggleSidebar()"
+    />
+
+    <main class="flex-1 min-h-0 overflow-y-auto">
+
+      <div class="px-4 pt-4">
+        <app-breadcrumbs />
+      </div>
+
+      <div class="p-4">
+        <div class="bg-white rounded-lg shadow p-4">
+          <router-outlet />
+        </div>
+      </div>
+
+    </main>
+
+  </div>
+
+</div>

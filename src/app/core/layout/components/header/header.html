@@ -1,0 +1,22 @@
+<header class="h-16 bg-green-600 text-white flex items-center justify-between px-6 shadow">
+
+  <button
+      (click)="toggleSidebar.emit()"
+      class=" cursor-pointer hover:bg-green-700 p-2 rounded transition"
+    >
+    <lucide-icon
+      [img]="MenuIcon"
+      class="w-5 h-5">
+    </lucide-icon>
+    </button>
+
+  <div class="font-semibold">
+    Sistema de Viáticos
+  </div>
+
+  <div class="text-sm text-right">
+    <div>LUIS FERNANDO RUIZ VAZQUEZ</div>
+    <div class="text-green-100">DIRECCIÓN DE INFORMÁTICA</div>
+  </div>
+
+</header>

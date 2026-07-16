@@ -1,0 +1,31 @@
+<div
+  class="mt-6 flex items-center justify-end gap-2 border-t border-gray-200 pt-4"
+>
+
+  <button
+    type="button"
+    class="rounded-lg border border-gray-300 px-4 py-2 text-sm transition hover:bg-gray-50"
+    (click)="cancel.emit()"
+  >
+    {{ cancelLabel() }}
+  </button>
+
+  <button
+    type="submit"
+    class="rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-50"
+    [disabled]="submitDisabled() || loading()"
+  >
+
+    @if (loading()) {
+
+      Guardando...
+
+    } @else {
+
+      {{ submitLabel() }}
+
+    }
+
+  </button>
+
+</div>

@@ -1,0 +1,73 @@
+<div class="flex items-center justify-between py-3">
+
+  <!-- TOTAL -->
+  <div class="text-sm text-gray-600">
+
+    Total:
+    <span class="font-semibold">
+      {{ totalItems() }}
+    </span>
+
+    registros
+
+  </div>
+
+  <!-- CONTROLS -->
+  <div class="flex items-center gap-4">
+
+    <!-- PAGE SIZE -->
+    <div class="flex items-center gap-2">
+
+      <span class="text-sm text-gray-500">
+        Mostrar
+      </span>
+
+      <select
+        class="h-8 rounded-md border border-gray-300 px-2 text-sm"
+        [value]="pageSize()"
+        (change)="changePageSize($event)"
+      >
+        <option value="25">25</option>
+        <option value="50">50</option>
+        <option value="100">100</option>
+      </select>
+
+    </div>
+
+    <!-- PAGINATION -->
+    <div class="flex items-center overflow-hidden rounded-md border border-gray-300">
+
+      <button
+        class="flex h-8 w-8 items-center justify-center bg-white hover:bg-gray-100"
+        (click)="changePage(page() - 1)"
+      >
+        ‹
+      </button>
+
+      @for (item of pages(); track item) {
+
+        <button
+          class="flex h-8 w-8 items-center justify-center text-sm"
+
+          [class.bg-green-600]="item === page()"
+          [class.text-white]="item === page()"
+
+          (click)="changePage(item)"
+        >
+          {{ item }}
+        </button>
+
+      }
+
+      <button
+        class="flex h-8 w-8 items-center justify-center bg-white hover:bg-gray-100"
+        (click)="changePage(page() + 1)"
+      >
+        ›
+      </button>
+
+    </div>
+
+  </div>
+
+</div>

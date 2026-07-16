@@ -1,0 +1,17 @@
+<button
+  [type]="type()"
+  [disabled]="disabled() || loading()"
+  [class]="classes()"
+>
+
+  @if (loading()) {
+
+    Guardando...
+
+  } @else {
+
+    <ng-content />
+
+  }
+
+</button>

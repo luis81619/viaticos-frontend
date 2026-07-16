@@ -1,0 +1,151 @@
+<aside
+  class="fixed inset-y-0 left-0 z-40 flex h-screen flex-col bg-gray-900 text-white transition-all duration-300"
+  [class.w-64]="!isCollapsed()"
+  [class.w-20]="isCollapsed()"
+>
+  <!-- Logo -->
+  <div
+    class="h-20 px-4 flex items-center border-b border-gray-700 overflow-hidden"
+    [class.justify-center]="isCollapsed()"
+    [class.gap-3]="!isCollapsed()"
+  >
+    <div class="w-12 h-12 flex items-center justify-center shrink-0">
+      <img
+        src="img/logo.png"
+        alt="Logo VIÁTICOS"
+        class="max-w-full max-h-full object-contain"
+      >
+    </div>
+
+    <div
+      class="transition-all duration-300 overflow-hidden whitespace-nowrap"
+      [class.w-0]="isCollapsed()"
+      [class.opacity-0]="isCollapsed()"
+      [class.w-40]="!isCollapsed()"
+      [class.opacity-100]="!isCollapsed()"
+    >
+      <h1 class="text-xl font-bold leading-tight">
+        VIÁTICOS
+      </h1>
+    </div>
+  </div>
+
+  <!-- Menú -->
+  <nav class="flex-1 overflow-y-auto p-4">
+    <ul class="space-y-2">
+
+      @for (item of menuItems; track item.label) {
+        <li class="relative group">
+
+          @if (item.route) {
+            <a
+              [routerLink]="item.route"
+              routerLinkActive="bg-green-700"
+              class="flex items-center px-4 py-2 rounded hover:bg-green-700 transition"
+              [class.justify-center]="isCollapsed()"
+              [class.gap-3]="!isCollapsed()"
+            >
+              <lucide-icon
+                [img]="item.icon"
+                class="w-5 h-5 shrink-0">
+              </lucide-icon>
+
+              <span
+                class="transition-all duration-300 overflow-hidden whitespace-nowrap"
+                [class.w-0]="isCollapsed()"
+                [class.opacity-0]="isCollapsed()"
+                [class.w-40]="!isCollapsed()"
+                [class.opacity-100]="!isCollapsed()"
+              >
+                {{ item.label }}
+              </span>
+            </a>
+          }
+
+          @if (item.children) {
+            <button
+              type="button"
+              (click)="toggleMenu(item.label)"
+              class="w-full flex items-center px-4 py-2 rounded font-semibold hover:bg-gray-800 transition"
+              [class.justify-center]="isCollapsed()"
+              [class.gap-3]="!isCollapsed()"
+            >
+              <lucide-icon
+                [img]="item.icon"
+                class="w-5 h-5 shrink-0">
+              </lucide-icon>
+
+              <span
+                class="transition-all duration-300 overflow-hidden whitespace-nowrap text-left"
+                [class.w-0]="isCollapsed()"
+                [class.opacity-0]="isCollapsed()"
+                [class.w-40]="!isCollapsed()"
+                [class.opacity-100]="!isCollapsed()"
+              >
+                {{ item.label }}
+              </span>
+
+              <lucide-icon
+                [img]="ChevronDownIcon"
+                class="w-4 h-4 ml-auto transition-transform duration-300"
+                [class.hidden]="isCollapsed()"
+                [class.rotate-180]="openMenu() === item.label">
+              </lucide-icon>
+            </button>
+
+            @if (isCollapsed()) {
+              <div
+                class="absolute left-full top-0 z-50 hidden group-hover:block"
+              >
+                <div class="absolute -left-4 top-0 h-full w-4"></div>
+
+                <div class="min-w-48 rounded-lg bg-gray-800 p-2 shadow-xl">
+                  <div class="px-3 py-2 text-sm font-semibold text-white border-b border-gray-700">
+                    {{ item.label }}
+                  </div>
+
+                  <ul class="mt-1 space-y-1">
+                    @for (child of item.children; track child.label) {
+                      <li>
+                        <a
+                          [routerLink]="child.route"
+                          routerLinkActive="bg-green-700"
+                          class="block rounded px-3 py-2 text-sm text-gray-200 hover:bg-green-700 transition"
+                        >
+                          {{ child.label }}
+                        </a>
+                      </li>
+                    }
+                  </ul>
+                </div>
+              </div>
+            }
+
+            <ul
+              class="mt-1 space-y-1 transition-all duration-300 overflow-hidden"
+              [class.ml-8]="!isCollapsed()"
+              [class.max-h-0]="isCollapsed() || openMenu() !== item.label"
+              [class.max-h-60]="!isCollapsed() && openMenu() === item.label"
+              [class.opacity-0]="isCollapsed() || openMenu() !== item.label"
+              [class.opacity-100]="!isCollapsed() && openMenu() === item.label"
+            >
+              @for (child of item.children; track child.label) {
+                <li>
+                  <a
+                    [routerLink]="child.route"
+                    routerLinkActive="bg-green-700"
+                    class="block px-4 py-2 rounded text-sm hover:bg-green-700 transition"
+                  >
+                    {{ child.label }}
+                  </a>
+                </li>
+              }
+            </ul>
+          }
+
+        </li>
+      }
+
+    </ul>
+  </nav>
+</aside>

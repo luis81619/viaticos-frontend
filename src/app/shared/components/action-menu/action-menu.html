@@ -1,0 +1,39 @@
+<div class="relative flex justify-center">
+
+  <!-- BUTTON -->
+  <button
+    (click)="toggleMenu($event)"
+    class="flex h-8 w-8 items-center justify-center rounded-md text-lg text-gray-500 transition hover:bg-gray-100 hover:text-gray-700"
+  >
+    ⋮
+  </button>
+
+  <!-- MENU -->
+  @if (isOpen()) {
+
+    <div
+      class="absolute right-0 top-9 z-50 min-w-40 overflow-hidden rounded-lg border border-gray-200 bg-white shadow-lg"
+    >
+
+      @for (item of actions(); track item.action) {
+
+        @if (!item.visible || item.visible(row())) {
+
+          <button
+            (click)="onAction(item.action)"
+            class="flex w-full items-center px-4 py-2 text-left text-sm transition hover:bg-gray-100"
+
+            [class.text-red-600]="item.danger"
+          >
+            {{ item.label }}
+          </button>
+
+        }
+
+      }
+
+    </div>
+
+  }
+
+</div>
