@@ -9,4 +9,11 @@ export const catalogosRoutes: Routes = [
       import('./bancos/bancos-page/bancos-page')
   },
 
+  {
+    path: 'vehiculos',
+
+    loadComponent: () =>
+      import('./vehiculos/vehiculos-page/vehiculos-page')
+  },
+
 ];

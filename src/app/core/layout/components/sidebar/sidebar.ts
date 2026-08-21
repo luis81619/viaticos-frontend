@@ -48,6 +48,11 @@ export class Sidebar {
         roles: ['ADMIN'],
       },
       {
+        label: 'Vehículos',
+        route: '/catalogos/vehiculos',
+        roles: ['ADMIN'],
+      },
+      {
         label: 'Zonas',
         route: '/catalogos/zonas',
         roles: ['ADMIN', 'SUPERVISOR'],

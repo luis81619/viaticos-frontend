@@ -9,7 +9,6 @@
 //   profileUrl: 'http://global.cecytem.net/global/perfil/',
 // };
 
-
 export const environment = {
   production: false,
 
@@ -19,8 +18,8 @@ export const environment = {
 
   global: {
     apiUrl: 'http://localhost:3000/api/global',
-    loginRedirect: 'http://localhost:4200',
-    profileUrl: 'http://localhost:4200/global/perfil/',
+    loginRedirect: 'http://localhost:4203',
+    profileUrl: 'http://localhost:4203/global/perfil/',
   },
 
   storage: {

@@ -1,0 +1,92 @@
+<app-ui-modal
+  [isOpen]="isOpen()"
+  [title]="vehiculo() ? 'Editar Vehículo' : 'Nuevo Vehículo'"
+  (close)="onCancel()"
+  [size]="'md'"
+>
+
+  <form
+    [formGroup]="form"
+    (ngSubmit)="onSubmit()"
+    autocomplete="off"
+    class="flex flex-col gap-4"
+  >
+
+    <app-ui-form-select-input
+      label="Tipo de vehículo"
+      placeholder="Seleccione un tipo"
+      [control]="form.controls.tipo"
+      [options]="tipoOptions"
+    />
+
+    <app-ui-form-text-input
+      label="Nombre"
+      placeholder="EJ. V-01"
+      [control]="form.controls.nombre"
+    />
+
+    <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+
+      <app-ui-form-text-input
+        label="Marca"
+        placeholder="EJ. NISSAN"
+        [control]="form.controls.marca"
+      />
+
+      <app-ui-form-text-input
+        label="Modelo"
+        placeholder="EJ. NP300"
+        [control]="form.controls.modelo"
+      />
+
+    </div>
+
+    <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+
+      <app-ui-form-text-input
+        label="Color"
+        placeholder="EJ. BLANCO"
+        [control]="form.controls.color"
+      />
+
+      <app-ui-form-text-input
+        label="Placa"
+        placeholder="EJ. ABC-123"
+        [control]="form.controls.placa"
+      />
+
+    </div>
+
+    <app-ui-form-select-input
+      label="Estatus"
+      placeholder="Seleccione un estatus"
+      [control]="form.controls.status"
+      [options]="statusOptions"
+    />
+
+    <div
+      class="mt-6 flex justify-end gap-2 border-t border-gray-200 pt-4"
+    >
+
+      <app-ui-button
+        variant="secondary"
+        type="button"
+        [disabled]="isSaving()"
+        (click)="onCancel()"
+      >
+        Cancelar
+      </app-ui-button>
+
+      <app-ui-button
+        type="submit"
+        [loading]="isSaving()"
+        [disabled]="isSaving()"
+      >
+        {{ vehiculo() ? 'Actualizar' : 'Guardar' }}
+      </app-ui-button>
+
+    </div>
+
+  </form>
+
+</app-ui-modal>
