@@ -1,5 +1,14 @@
-import { ChangeDetectionStrategy, Component, HostListener, input, output, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  HostListener,
+  input,
+  output,
+  signal,
+} from '@angular/core';
+
 import { CommonModule } from '@angular/common';
+
 import { BaseRecord } from '../../interfaces/base-record.interface';
 
 @Component({
@@ -9,6 +18,7 @@ import { BaseRecord } from '../../interfaces/base-record.interface';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ActionMenu {
+
   /*
   |--------------------------------------------------------------------------
   | INPUTS
@@ -17,7 +27,6 @@ export class ActionMenu {
 
   row = input.required<BaseRecord>();
 
-  //actions = input<TableAction<BaseRecord>[]>([]);
   actions = input<any[]>([]);
 
   /*
@@ -26,7 +35,6 @@ export class ActionMenu {
   |--------------------------------------------------------------------------
   */
 
-  //actionClick = output<TableActionEvent<BaseRecord>>();
   actionClick = output<any>();
 
   /*
@@ -37,6 +45,19 @@ export class ActionMenu {
 
   isOpen = signal(false);
 
+  menuTop = signal(0);
+
+  menuLeft = signal(0);
+
+  /*
+  |--------------------------------------------------------------------------
+  | MENU GLOBAL
+  |--------------------------------------------------------------------------
+  |
+  */
+
+  private static openMenu: ActionMenu | null = null;
+
   /*
   |--------------------------------------------------------------------------
   | METHODS
@@ -44,15 +65,118 @@ export class ActionMenu {
   */
 
   toggleMenu(event: MouseEvent) {
-
     event.stopPropagation();
 
-    this.isOpen.update(value => !value);
+    if (this.isOpen()) {
+      this.isOpen.set(false);
 
+      if (ActionMenu.openMenu === this) {
+        ActionMenu.openMenu = null;
+      }
+
+      return;
+    }
+
+    if (
+      ActionMenu.openMenu &&
+      ActionMenu.openMenu !== this
+    ) {
+      ActionMenu.openMenu.isOpen.set(false);
+    }
+
+    ActionMenu.openMenu = this;
+
+    this.calculateMenuPosition(event);
+
+    this.isOpen.set(true);
   }
 
-  onAction(action: string) {
+  /*
+  |--------------------------------------------------------------------------
+  | CALCULATE MENU POSITION
+  |--------------------------------------------------------------------------
+  */
 
+  private calculateMenuPosition(event: MouseEvent) {
+    const button = event.currentTarget as HTMLElement;
+
+    const rect = button.getBoundingClientRect();
+
+    const menuWidth = 160;
+
+    const menuHeight = Math.min(
+      this.getVisibleActionsCount() * 40 + 10,
+      250
+    );
+
+    const margin = 8;
+
+    let left = rect.right - menuWidth;
+
+    if (left + menuWidth > window.innerWidth - margin) {
+      left = window.innerWidth - menuWidth - margin;
+    }
+
+    if (left < margin) {
+      left = margin;
+    }
+
+    const spaceBelow = window.innerHeight - rect.bottom;
+
+    const spaceAbove = rect.top;
+
+    let top: number;
+
+    if (
+      spaceBelow < menuHeight &&
+      spaceAbove >= menuHeight
+    ) {
+      top = rect.top - menuHeight;
+    } else {
+    
+      top = rect.bottom + 1;
+    }
+
+    if (top < margin) {
+      top = margin;
+    }
+
+    if (
+      top + menuHeight >
+      window.innerHeight - margin
+    ) {
+      top =
+        window.innerHeight -
+        menuHeight -
+        margin;
+    }
+
+    this.menuTop.set(top);
+
+    this.menuLeft.set(left);
+  }
+
+  /*
+  |--------------------------------------------------------------------------
+  | COUNT VISIBLE ACTIONS
+  |--------------------------------------------------------------------------
+  */
+
+  private getVisibleActionsCount(): number {
+    return this.actions().filter(
+      item =>
+        !item.visible ||
+        item.visible(this.row())
+    ).length;
+  }
+
+  /*
+  |--------------------------------------------------------------------------
+  | ACTION
+  |--------------------------------------------------------------------------
+  */
+
+  onAction(action: string) {
     this.actionClick.emit({
       action,
       row: this.row(),
@@ -60,6 +184,9 @@ export class ActionMenu {
 
     this.isOpen.set(false);
 
+    if (ActionMenu.openMenu === this) {
+      ActionMenu.openMenu = null;
+    }
   }
 
   /*
@@ -70,7 +197,44 @@ export class ActionMenu {
 
   @HostListener('document:click')
   closeMenu() {
-
     this.isOpen.set(false);
+
+    if (ActionMenu.openMenu === this) {
+      ActionMenu.openMenu = null;
+    }
+  }
+
+  /*
+  |--------------------------------------------------------------------------
+  | CLOSE ON RESIZE
+  |--------------------------------------------------------------------------
+  */
+
+  @HostListener('window:resize')
+  onResize() {
+    if (this.isOpen()) {
+      this.isOpen.set(false);
+
+      if (ActionMenu.openMenu === this) {
+        ActionMenu.openMenu = null;
+      }
+    }
+  }
+
+  /*
+  |--------------------------------------------------------------------------
+  | CLOSE ON SCROLL
+  |--------------------------------------------------------------------------
+  */
+
+  @HostListener('window:scroll')
+  onScroll() {
+    if (this.isOpen()) {
+      this.isOpen.set(false);
+
+      if (ActionMenu.openMenu === this) {
+        ActionMenu.openMenu = null;
+      }
+    }
   }
 }

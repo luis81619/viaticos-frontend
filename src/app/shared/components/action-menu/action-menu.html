@@ -1,4 +1,4 @@
-<div class="relative flex justify-center">
+<div>
 
   <!-- BUTTON -->
   <button
@@ -12,7 +12,9 @@
   @if (isOpen()) {
 
     <div
-      class="absolute right-0 top-9 z-50 min-w-40 overflow-hidden rounded-lg border border-gray-200 bg-white shadow-lg"
+      class="fixed z-[99999] min-w-40 overflow-hidden rounded-lg border border-gray-200 bg-white shadow-lg"
+      [style.top.px]="menuTop()"
+      [style.left.px]="menuLeft()"
     >
 
       @for (item of actions(); track item.action) {
@@ -22,7 +24,6 @@
           <button
             (click)="onAction(item.action)"
             class="flex w-full items-center px-4 py-2 text-left text-sm transition hover:bg-gray-100"
-
             [class.text-red-600]="item.danger"
           >
             {{ item.label }}
