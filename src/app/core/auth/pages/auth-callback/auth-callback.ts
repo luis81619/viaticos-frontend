@@ -26,7 +26,7 @@ export default class AuthCallback {
 
     this.authService.startSession(token).subscribe({
       next: (user) => {
-        console.log('Sesión validada:', user);
+        //console.log('Sesión validada:', user);
         this.router.navigateByUrl('/dashboard');
       },
       error: (error) => {

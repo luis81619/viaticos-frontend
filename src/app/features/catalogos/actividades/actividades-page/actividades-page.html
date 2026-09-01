@@ -1,0 +1,111 @@
+<section class="space-y-6">
+  <header
+    class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"
+  >
+    <div>
+      <h1
+        class="text-2xl font-semibold text-gray-900"
+      >
+        Actividades
+      </h1>
+
+      <p class="mt-1 text-sm text-gray-600">
+        Consulta de actividades sincronizadas
+        desde SAPP.
+      </p>
+    </div>
+
+    @if (canSync()) {
+      <div class="group relative">
+        <app-ui-button
+          variant="primary"
+          [disabled]="store.syncing()"
+          (click)="confirmSync()"
+        >
+          <lucide-icon
+            [img]="RefreshCwIcon"
+            class="h-5 w-5"
+          />
+
+          Sincronizar
+        </app-ui-button>
+
+        <div
+          class="pointer-events-none absolute right-0 top-full z-20 mt-2 whitespace-nowrap rounded-md bg-gray-900 px-3 py-1.5 text-xs text-white opacity-0 shadow-lg transition-opacity group-hover:opacity-100"
+        >
+          Actualizar actividades desde SAPP
+        </div>
+      </div>
+    }
+  </header>
+
+  <div
+    class="rounded-xl bg-white p-5 shadow-sm"
+  >
+    <app-ui-pagination
+      [totalItems]="store.total()"
+      [page]="store.page()"
+      [pageSize]="store.pageSize()"
+      (pageChange)="onPageChange($event)"
+      (pageSizeChange)="
+        onPageSizeChange($event)
+      "
+    />
+
+    <app-ui-data-table
+      [columns]="columns()"
+      [data]="store.items()"
+      [loading]="store.loading()"
+      (filterChange)="
+        onFilterChange($event)
+      "
+    />
+
+    <app-ui-pagination
+      [totalItems]="store.total()"
+      [page]="store.page()"
+      [pageSize]="store.pageSize()"
+      (pageChange)="onPageChange($event)"
+      (pageSizeChange)="
+        onPageSizeChange($event)
+      "
+    />
+  </div>
+
+  <ng-template
+    #tipoTemplate
+    let-actividad
+  >
+    <app-ui-badge
+      [label]="
+        getTipoLabel(
+          actividad.tipo
+        )
+      "
+      variant="info"
+    />
+  </ng-template>
+
+  <ng-template
+    #recursoTemplate
+    let-actividad
+  >
+    <app-ui-badge
+      [label]="
+        actividad.conRecurso
+          ? 'Sí'
+          : 'No'
+      "
+      [variant]="
+        actividad.conRecurso
+          ? 'success'
+          : 'neutral'
+      "
+    />
+  </ng-template>
+
+  <app-ui-loading-overlay
+    [visible]="store.syncing()"
+    message="Sincronizando actividades con SAPP..."
+  />
+</section>

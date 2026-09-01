@@ -8,6 +8,7 @@ import {
   FileTextIcon,
   ChevronDownIcon,
 } from 'lucide-angular';
+import { Role } from '../../../auth/interfaces/role';
 
 
 
@@ -42,6 +43,26 @@ export class Sidebar {
     icon: BookOpenIcon,
     roles: ['ADMIN'],
     children: [
+      {
+        label: 'Planteles',
+        route: '/catalogos/planteles',
+        roles: [
+          Role.ACCESO,
+          Role.ADMIN,
+        ],
+        permissions: ['CATALOGOS_READ'],
+
+      },
+      {
+        label: 'Actividades',
+        route: '/catalogos/actividades',
+        roles: [
+          Role.ACCESO,
+          Role.ADMIN,
+        ],
+        permissions: ['CATALOGOS_READ'],
+
+      },
       {
         label: 'Bancos',
         route: '/catalogos/bancos',
