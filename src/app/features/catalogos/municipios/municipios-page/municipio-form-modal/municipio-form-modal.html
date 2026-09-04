@@ -1,0 +1,67 @@
+<app-ui-modal
+  [isOpen]="isOpen()"
+  [title]="municipio() ? 'Editar Municipio' : 'Asignar Municipio'"
+  (close)="onCancel()"
+  [size]="'md'"
+>
+
+  <form
+    [formGroup]="form"
+    (ngSubmit)="onSubmit()"
+    autocomplete="off"
+    class="flex flex-col gap-4"
+  >
+
+    <app-ui-form-select-input
+      label="Estado"
+      placeholder="Seleccione un estado"
+      [control]="form.controls.estadoId"
+      [options]="estadoOptions()"
+    />
+
+    <app-ui-form-select-input
+      label="Municipio"
+      placeholder="Seleccione un municipio"
+      [control]="form.controls.municipioId"
+      [options]="municipioOptions()"
+    />
+
+    <app-ui-form-select-input
+      label="Zona"
+      placeholder="Seleccione una zona"
+      [control]="form.controls.zonaId"
+      [options]="zonaOptions()"
+    />
+
+    <app-ui-form-text-input
+      label="Región"
+      placeholder="EJ. VALLE DE TOLUCA"
+      [control]="form.controls.region"
+    />
+
+    <div
+      class="mt-6 flex justify-end gap-2 border-t border-gray-200 pt-4"
+    >
+
+      <app-ui-button
+        variant="secondary"
+        type="button"
+        [disabled]="isSaving()"
+        (click)="onCancel()"
+      >
+        Cancelar
+      </app-ui-button>
+
+      <app-ui-button
+        type="submit"
+        [loading]="isSaving()"
+        [disabled]="isSaving()"
+      >
+        {{ municipio() ? 'Actualizar' : 'Guardar' }}
+      </app-ui-button>
+
+    </div>
+
+  </form>
+
+</app-ui-modal>

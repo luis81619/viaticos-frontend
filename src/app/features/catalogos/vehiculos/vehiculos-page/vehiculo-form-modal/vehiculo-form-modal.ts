@@ -18,6 +18,7 @@ import { SelectOption } from '../../../../../shared/interfaces/select-option.int
 import { Vehiculo } from '../../interfaces/vehiculo.interface';
 import { VehiculoFormSubmitEvent } from '../../interfaces/vehiculo-form-submit-event.interface';
 import { VehiculoTipo, VEHICULO_TIPO_OPTIONS } from '../../enums/vehiculo-tipo.enum';
+import { VehiculoClase, VEHICULO_CLASE_OPTIONS } from '../../enums/vehiculo-clase.enum';
 
 @Component({
   selector: 'app-vehiculo-form-modal',
@@ -40,15 +41,21 @@ export class VehiculoFormModal {
   ];
 
   tipoOptions: SelectOption<VehiculoTipo>[] = VEHICULO_TIPO_OPTIONS;
+  claseOptions: SelectOption<VehiculoClase>[] = VEHICULO_CLASE_OPTIONS;
 
   form = this.fb.nonNullable.group({
     tipo: this.fb.nonNullable.control<VehiculoTipo | null>(null, [Validators.required]),
 
-    nombre: this.fb.nonNullable.control('', [Validators.required, Validators.maxLength(100)]),
+    clase: this.fb.nonNullable.control<VehiculoClase | null>(null, [Validators.required]),
+
+    submarca: this.fb.nonNullable.control('', [Validators.required, Validators.maxLength(100)]),
 
     marca: this.fb.nonNullable.control('', [Validators.required, Validators.maxLength(100)]),
 
-    modelo: this.fb.nonNullable.control('', [Validators.required, Validators.maxLength(100)]),
+    modelo: this.fb.nonNullable.control<number | null>(
+      null,
+      [Validators.required, Validators.min(1900), Validators.max(2100)],
+    ),
 
     color: this.fb.nonNullable.control('', [Validators.required, Validators.maxLength(50)]),
 
@@ -58,14 +65,14 @@ export class VehiculoFormModal {
   });
 
   constructor() {
-    // Rellenar o limpiar form según el vehículo seleccionado.
     effect(() => {
       const vehiculo = this.vehiculo();
 
       if (vehiculo) {
         this.form.reset({
           tipo: vehiculo.tipo,
-          nombre: vehiculo.nombre,
+          clase: vehiculo.clase,
+          submarca: vehiculo.submarca,
           marca: vehiculo.marca,
           modelo: vehiculo.modelo,
           color: vehiculo.color,
@@ -75,9 +82,10 @@ export class VehiculoFormModal {
       } else {
         this.form.reset({
           tipo: null,
-          nombre: '',
+          clase: null,
+          submarca: '',
           marca: '',
-          modelo: '',
+          modelo: null,
           color: '',
           placa: '',
           status: true,
@@ -101,9 +109,10 @@ export class VehiculoFormModal {
 
     const request = {
       tipo: value.tipo as VehiculoTipo,
-      nombre: value.nombre.trim().toUpperCase(),
+      clase: value.clase as VehiculoClase,
+      submarca: value.submarca.trim().toUpperCase(),
       marca: value.marca.trim().toUpperCase(),
-      modelo: value.modelo.trim().toUpperCase(),
+      modelo: Number(value.modelo),
       color: value.color.trim().toUpperCase(),
       placa: value.placa.trim().toUpperCase(),
       status: value.status,
@@ -129,9 +138,10 @@ export class VehiculoFormModal {
   onCancel(): void {
     this.form.reset({
       tipo: null,
-      nombre: '',
+      clase: null,
+      submarca: '',
       marca: '',
-      modelo: '',
+      modelo: null,
       color: '',
       placa: '',
       status: true,

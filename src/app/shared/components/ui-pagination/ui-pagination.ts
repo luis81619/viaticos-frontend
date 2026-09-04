@@ -1,5 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
 
+type PageItem = number | 'ellipsis';
+
 @Component({
   selector: 'app-ui-pagination',
   imports: [],
@@ -36,23 +38,40 @@ export class UiPagination {
   */
 
   totalPages = computed(() => {
-
-    return Math.max(
-      1,
-      Math.ceil(
-        this.totalItems() / this.pageSize()
-      ),
-    );
-
+    return Math.max(1, Math.ceil(this.totalItems() / this.pageSize()));
   });
 
-  pages = computed(() => {
+  displayPages = computed<PageItem[]>(() => {
+    const total = this.totalPages();
+    const current = this.page();
 
-    return Array.from(
-      { length: this.totalPages() },
-      (_, i) => i + 1,
-    );
+    // Si son pocas páginas, mostrarlas todas.
+    if (total <= 7) {
+      return Array.from({ length: total }, (_, i) => i + 1);
+    }
 
+    const items: PageItem[] = [];
+
+    items.push(1);
+
+    if (current > 3) {
+      items.push('ellipsis');
+    }
+
+    const start = Math.max(2, current - 1);
+    const end = Math.min(total - 1, current + 1);
+
+    for (let i = start; i <= end; i++) {
+      items.push(i);
+    }
+
+    if (current < total - 2) {
+      items.push('ellipsis');
+    }
+
+    items.push(total);
+
+    return items;
   });
 
   /*
@@ -62,25 +81,18 @@ export class UiPagination {
   */
 
   changePage(page: number) {
-
-    if (
-      page < 1 ||
-      page > this.totalPages()
-    ) {
+    if (page < 1 || page > this.totalPages()) {
       return;
     }
-
     this.pageChange.emit(page);
-
   }
 
   changePageSize(event: Event) {
-
-    const value = Number(
-      (event.target as HTMLSelectElement).value,
-    );
-
+    const value = Number((event.target as HTMLSelectElement).value);
     this.pageSizeChange.emit(value);
+  }
 
+  isNumber(item: PageItem): item is number {
+    return typeof item === 'number';
   }
 }

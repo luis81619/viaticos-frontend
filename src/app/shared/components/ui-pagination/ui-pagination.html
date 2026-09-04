@@ -38,29 +38,44 @@
     <div class="flex items-center overflow-hidden rounded-md border border-gray-300">
 
       <button
-        class="flex h-8 w-8 items-center justify-center bg-white hover:bg-gray-100"
+        type="button"
+        class="flex h-8 w-8 items-center justify-center bg-white hover:bg-gray-100 disabled:opacity-40"
+        [disabled]="page() <= 1"
         (click)="changePage(page() - 1)"
       >
         ‹
       </button>
 
-      @for (item of pages(); track item) {
+      @for (item of displayPages(); track $index) {
 
-        <button
-          class="flex h-8 w-8 items-center justify-center text-sm"
+        @if (isNumber(item)) {
 
-          [class.bg-green-600]="item === page()"
-          [class.text-white]="item === page()"
+          <button
+            type="button"
+            class="flex h-8 w-8 items-center justify-center text-sm"
 
-          (click)="changePage(item)"
-        >
-          {{ item }}
-        </button>
+            [class.bg-green-600]="item === page()"
+            [class.text-white]="item === page()"
+
+            (click)="changePage(item)"
+          >
+            {{ item }}
+          </button>
+
+        } @else {
+
+          <span class="flex h-8 w-8 items-center justify-center text-sm text-gray-500 select-none">
+            …
+          </span>
+
+        }
 
       }
 
       <button
-        class="flex h-8 w-8 items-center justify-center bg-white hover:bg-gray-100"
+        type="button"
+        class="flex h-8 w-8 items-center justify-center bg-white hover:bg-gray-100 disabled:opacity-40"
+        [disabled]="page() >= totalPages()"
         (click)="changePage(page() + 1)"
       >
         ›

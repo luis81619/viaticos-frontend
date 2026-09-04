@@ -1,4 +1,13 @@
-import { AfterViewInit, ChangeDetectionStrategy, Component, signal, TemplateRef, ViewChild, inject, OnInit } from '@angular/core';
+import {
+  AfterViewInit,
+  ChangeDetectionStrategy,
+  Component,
+  signal,
+  TemplateRef,
+  ViewChild,
+  inject,
+  OnInit,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 import { Banco } from '../interfaces/banco.interface';
@@ -20,11 +29,10 @@ import { BancoFormSubmitEvent } from '../interfaces/banco-form-submit-event.inte
 @Component({
   selector: 'app-bancos-page',
   imports: [CommonModule, ActionMenu, UiBadge, UiPagination, UiDataTable, BancoFormModal],
-  providers: [BancoStore,],
+  providers: [BancoStore],
   templateUrl: './bancos-page.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-
 export default class BancosPage implements OnInit, AfterViewInit {
   readonly store = inject(BancoStore);
 
@@ -57,7 +65,6 @@ export default class BancosPage implements OnInit, AfterViewInit {
     this.selectedBanco.set(null);
   }
 
-
   onPageChange(page: number): void {
     this.store.setPage(page);
   }
@@ -66,18 +73,17 @@ export default class BancosPage implements OnInit, AfterViewInit {
     this.store.setPageSize(size);
   }
 
-   /*
+  /*
   |--------------------------------------------------------------------------
   | TABLE ACTIONS
   |--------------------------------------------------------------------------
   */
 
   actions: TableAction<Banco>[] = [
-
     {
       action: 'edit',
       label: 'Editar',
-    }
+    },
   ];
 
   /*
@@ -92,12 +98,11 @@ export default class BancosPage implements OnInit, AfterViewInit {
   statusTemplate!: TemplateRef<any>;
 
   ngAfterViewInit(): void {
-
     this.columns.set([
-
       {
         key: 'nombre',
         title: 'Banco',
+        width: '70%',
 
         filter: {
           type: 'text',
@@ -108,33 +113,11 @@ export default class BancosPage implements OnInit, AfterViewInit {
       {
         key: 'isActive',
         title: 'Estatus',
-
-        filter: {
-          type: 'select',
-
-          options: [
-            {
-              label: 'Todos',
-              value: '',
-            },
-            {
-              label: 'Activo',
-              value: true,
-            },
-            {
-              label: 'Inactivo',
-              value: false,
-            },
-          ],
-        },
-
+        width: '20%',
         template: this.statusTemplate,
       },
-
-      ]
-    )
+    ]);
   }
-
 
   /*
   |--------------------------------------------------------------------------
@@ -143,17 +126,10 @@ export default class BancosPage implements OnInit, AfterViewInit {
   */
 
   onFilterChange(event: TableFilterEvent): void {
-    if (
-      event.key !== 'nombre' &&
-      event.key !== 'isActive'
-    ) {
+    if (event.key !== 'nombre' && event.key !== 'isActive') {
       return;
     }
-    this.store.setFilter(
-      event.key,
-      String(event.value),
-    );
-
+    this.store.setFilter(event.key, String(event.value));
   }
 
   /*
@@ -163,44 +139,30 @@ export default class BancosPage implements OnInit, AfterViewInit {
   */
 
   onAction(event: TableActionEvent<Banco>) {
-
     switch (event.action) {
-
       case 'edit':
         this.openEditModal(event.row);
         break;
     }
-
   }
 
-   /*
+  /*
   |--------------------------------------------------------------------------
   | GUARDAR / EDITAR
   |--------------------------------------------------------------------------
   */
 
-  onBankSaved(
-    event: BancoFormSubmitEvent,
-  ): void {
+  onBankSaved(event: BancoFormSubmitEvent): void {
     if (event.mode === 'update') {
-      this.store.update(
-        event.id,
-        event.request,
-        () => {
-          this.closeBankModal();
-        },
-      );
+      this.store.update(event.id, event.request, () => {
+        this.closeBankModal();
+      });
 
       return;
     }
 
-    this.store.create(
-      event.request,
-      () => {
-        this.closeBankModal();
-      },
-    );
+    this.store.create(event.request, () => {
+      this.closeBankModal();
+    });
   }
-
-
 }
