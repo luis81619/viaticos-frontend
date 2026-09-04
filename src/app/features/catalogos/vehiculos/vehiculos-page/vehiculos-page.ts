@@ -25,10 +25,8 @@ import { TableColumn } from '../../../../shared/interfaces/table-column.interfac
 import { TableFilterEvent } from '../../../../shared/interfaces/table-filter-event.interface';
 import { VehiculoFormSubmitEvent } from '../interfaces/vehiculo-form-submit-event.interface';
 
-import {
-  VEHICULO_TIPO_OPTIONS,
-  getVehiculoTipoLabel,
-} from '../enums/vehiculo-tipo.enum';
+import { VEHICULO_TIPO_OPTIONS, getVehiculoTipoLabel } from '../enums/vehiculo-tipo.enum';
+import { VEHICULO_CLASE_OPTIONS, getVehiculoClaseLabel } from '../enums/vehiculo-clase.enum';
 
 @Component({
   selector: 'app-vehiculos-page',
@@ -41,6 +39,7 @@ export default class VehiculosPage implements OnInit, AfterViewInit {
   readonly store = inject(VehiculoStore);
 
   readonly getVehiculoTipoLabel = getVehiculoTipoLabel;
+  readonly getVehiculoClaseLabel = getVehiculoClaseLabel;
 
   ngOnInit(): void {
     this.store.load();
@@ -90,14 +89,17 @@ export default class VehiculosPage implements OnInit, AfterViewInit {
   @ViewChild('tipoTemplate')
   tipoTemplate!: TemplateRef<any>;
 
+  @ViewChild('claseTemplate')
+  claseTemplate!: TemplateRef<any>;
+
   ngAfterViewInit(): void {
     this.columns.set([
       {
-        key: 'nombre',
-        title: 'Nombre',
+        key: 'submarca',
+        title: 'Submarca',
         filter: {
           type: 'text',
-          placeholder: 'Nombre...',
+          placeholder: 'Submarca...',
         },
       },
       {
@@ -130,34 +132,28 @@ export default class VehiculosPage implements OnInit, AfterViewInit {
         template: this.tipoTemplate,
         filter: {
           type: 'select',
-          options: [
-            { label: 'Todos', value: '' },
-            ...VEHICULO_TIPO_OPTIONS,
-          ],
+          options: [{ label: 'Todos los tipos', value: '' }, ...VEHICULO_TIPO_OPTIONS],
         },
       },
       {
-        key: 'status',
-        title: 'Estatus',
+        key: 'clase',
+        title: 'Clase',
+        template: this.claseTemplate,
         filter: {
           type: 'select',
-          options: [
-            { label: 'Todos', value: '' },
-            { label: 'Activo', value: true },
-            { label: 'Inactivo', value: false },
-          ],
+          options: [{ label: 'Todas las clases', value: '' }, ...VEHICULO_CLASE_OPTIONS],
         },
-        template: this.statusTemplate,
       },
     ]);
   }
 
   onFilterChange(event: TableFilterEvent): void {
     if (
-      event.key !== 'nombre' &&
+      event.key !== 'submarca' &&
       event.key !== 'marca' &&
       event.key !== 'placa' &&
       event.key !== 'tipo' &&
+      event.key !== 'clase' &&
       event.key !== 'status'
     ) {
       return;

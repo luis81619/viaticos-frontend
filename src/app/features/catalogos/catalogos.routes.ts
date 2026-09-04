@@ -7,43 +7,46 @@ export const catalogosRoutes: Routes = [
     path: 'planteles',
     canActivate: [authGuard],
     data: {
-      roles: [
-        Role.ACCESO,
-        Role.ADMIN,
-      ],
+      roles: [Role.ACCESO, Role.ADMIN],
     },
-    loadComponent: () =>
-      import(
-        './planteles/planteles-page/planteles-page'
-      ),
+    loadComponent: () => import('./planteles/planteles-page/planteles-page'),
   },
   {
     path: 'actividades',
     canActivate: [authGuard],
     data: {
-      roles: [
-        Role.ACCESO,
-        Role.ADMIN,
-      ],
+      roles: [Role.ACCESO, Role.ADMIN],
     },
-    loadComponent: () =>
-      import(
-        './actividades/actividades-page/actividades-page'
-      ),
+    loadComponent: () => import('./actividades/actividades-page/actividades-page'),
   },
 
   {
     path: 'bancos',
 
-    loadComponent: () =>
-      import('./bancos/bancos-page/bancos-page')
+    loadComponent: () => import('./bancos/bancos-page/bancos-page'),
   },
 
   {
     path: 'vehiculos',
 
-    loadComponent: () =>
-      import('./vehiculos/vehiculos-page/vehiculos-page')
+    loadComponent: () => import('./vehiculos/vehiculos-page/vehiculos-page'),
   },
 
+  {
+    path: 'municipios',
+
+    loadComponent: () => import('./municipios/municipios-page/municipios-page'),
+  },
+
+  {
+    path: 'zonas',
+
+    loadComponent: () => import('./zonificacion/zonificacion-page/zonificacion-page'),
+  },
+
+  {
+    path: 'tabulador',
+
+    loadComponent: () => import('./tabulador/tabulador-page/tabulador-page'),
+  },
 ];

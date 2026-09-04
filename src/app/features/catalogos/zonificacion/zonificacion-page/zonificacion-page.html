@@ -1,0 +1,117 @@
+<div class="space-y-4">
+  <!-- ENCABEZADO CON BUSCADOR -->
+  <div class="flex items-center justify-between gap-4">
+    <h1 class="text-2xl font-semibold text-orange-500">Estados y Zonificación</h1>
+
+    <input
+      type="text"
+      placeholder="Buscar estado o zona"
+      class="w-72 rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-green-500 focus:outline-none"
+      [ngModel]="store.search()"
+      (ngModelChange)="onSearchChange($event)"
+    />
+  </div>
+
+  <!-- LOADING -->
+  @if (store.isLoading()) {
+    <div class="rounded-md bg-white p-6 text-center text-sm text-gray-500 shadow-sm">
+      Cargando zonificación...
+    </div>
+  }
+
+  <!-- ERROR -->
+  @if (store.loadError()) {
+    <div class="rounded-md bg-red-50 p-4 text-sm text-red-700">
+      {{ store.loadError() }}
+    </div>
+  }
+
+  <!-- LISTADO DE ESTADOS -->
+  @if (!store.isLoading() && !store.loadError()) {
+    <div class="space-y-2">
+      @for (item of store.estadosFiltrados(); track item.estado.id) {
+        <div class="rounded-md border border-gray-200 bg-white shadow-sm">
+          <!-- CABECERA DEL ESTADO -->
+          <button
+            type="button"
+            class="flex w-full items-center justify-between px-4 py-3 text-left hover:bg-gray-50"
+            (click)="toggle(item.estado.id)"
+          >
+            <div class="flex items-center gap-3">
+              <span class="text-gray-400">
+                @if (isExpandido(item.estado.id)) {
+                  ▾
+                } @else {
+                  ▸
+                }
+              </span>
+
+              <span class="font-medium text-gray-800">
+                {{ item.estado.nombre }}
+              </span>
+            </div>
+
+            <!-- BADGES DE ZONAS ASIGNADAS -->
+            @if (!isExpandido(item.estado.id)) {
+              <div class="flex items-center gap-2">
+                @for (badge of badgesEstado(item); track badge) {
+                  <span class="rounded-md border px-2 py-0.5 text-xs" [class]="colorZona(badge)">
+                    Zona {{ badge }}
+                  </span>
+                }
+              </div>
+            }
+          </button>
+
+          <!-- CONTENIDO -->
+          @if (isExpandido(item.estado.id)) {
+            <div class="border-t border-gray-100 p-4">
+              <div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
+                @for (col of columnasZonas(item); track col.zona) {
+                  <div
+                    class="rounded-md border-t-4 border-l border-r border-b p-3"
+                    [class]="colorZona(col.zona)"
+                  >
+                    <!-- ENCABEZADO DE LA COLUMNA -->
+                    <div class="flex items-center justify-center gap-2 pb-2">
+                      <span class="text-lg">📍</span>
+                      <span class="text-lg font-semibold"> ZONA {{ col.zona }} </span>
+                    </div>
+
+                    <!-- CONTENIDO DE LA COLUMNA -->
+                    @if (col.regiones.length === 0) {
+                      <div class="flex flex-col items-center gap-1 py-4 text-center text-gray-500">
+                        <span class="text-lg">ⓘ</span>
+                        <span class="text-xs">No aplica para este estado</span>
+                      </div>
+                    } @else {
+                      <div class="space-y-3 text-sm">
+                        @for (region of col.regiones; track region.id) {
+                          <div>
+                            <div class="font-medium text-gray-700">
+                              {{ region.nombre }}
+                            </div>
+
+                            @if (region.municipios.length > 0) {
+                              <div class="mt-0.5 text-xs text-gray-500">
+                                {{ nombresMunicipios(region.municipios) }}
+                              </div>
+                            }
+                          </div>
+                        }
+                      </div>
+                    }
+                  </div>
+                }
+              </div>
+            </div>
+          }
+        </div>
+      } @empty {
+        <div class="rounded-md bg-white p-6 text-center text-sm text-gray-500 shadow-sm">
+          No se encontraron resultados.
+        </div>
+      }
+    </div>
+  }
+</div>

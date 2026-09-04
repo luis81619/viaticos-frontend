@@ -12,18 +12,23 @@
     class="flex flex-col gap-4"
   >
 
-    <app-ui-form-select-input
-      label="Tipo de vehículo"
-      placeholder="Seleccione un tipo"
-      [control]="form.controls.tipo"
-      [options]="tipoOptions"
-    />
+    <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
 
-    <app-ui-form-text-input
-      label="Nombre"
-      placeholder="EJ. V-01"
-      [control]="form.controls.nombre"
-    />
+      <app-ui-form-select-input
+        label="Tipo de vehículo"
+        placeholder="Seleccione un tipo"
+        [control]="form.controls.tipo"
+        [options]="tipoOptions"
+      />
+
+      <app-ui-form-select-input
+        label="Clase"
+        placeholder="Seleccione una clase"
+        [control]="form.controls.clase"
+        [options]="claseOptions"
+      />
+
+    </div>
 
     <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
 
@@ -34,9 +39,9 @@
       />
 
       <app-ui-form-text-input
-        label="Modelo"
-        placeholder="EJ. NP300"
-        [control]="form.controls.modelo"
+        label="Submarca"
+        placeholder="EJ. MAZDA 3, NP300, HILUX"
+        [control]="form.controls.submarca"
       />
 
     </div>
@@ -44,18 +49,26 @@
     <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
 
       <app-ui-form-text-input
+        label="Modelo (Año)"
+        placeholder="EJ. 2020"
+        type="number"
+        [uppercase]="false"
+        [control]="form.controls.modelo"
+      />
+
+      <app-ui-form-text-input
         label="Color"
         placeholder="EJ. BLANCO"
         [control]="form.controls.color"
       />
 
-      <app-ui-form-text-input
-        label="Placa"
-        placeholder="EJ. ABC-123"
-        [control]="form.controls.placa"
-      />
-
     </div>
+
+    <app-ui-form-text-input
+      label="Placa"
+      placeholder="EJ. ABC-1234"
+      [control]="form.controls.placa"
+    />
 
     <app-ui-form-select-input
       label="Estatus"

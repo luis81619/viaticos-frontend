@@ -1,10 +1,7 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 
-import Swal, {
-  SweetAlertIcon,
-  SweetAlertResult,
-} from 'sweetalert2';
+import Swal, { SweetAlertIcon, SweetAlertResult } from 'sweetalert2';
 
 import { ApiErrorResponse } from '../interfaces/api/api-error-response.interface';
 
@@ -28,29 +25,23 @@ export interface ToastOptions {
   providedIn: 'root',
 })
 export class AlertService {
-
   /*
   |--------------------------------------------------------------------------
   | ALERTA GENERAL
   |--------------------------------------------------------------------------
   */
 
-  showAlert(
-    options: AlertOptions,
-  ): Promise<SweetAlertResult> {
+  showAlert(options: AlertOptions): Promise<SweetAlertResult> {
     return Swal.fire({
       title: options.title,
       text: options.description,
       icon: options.icon,
 
-      showCancelButton:
-        options.showCancelButton ?? false,
+      showCancelButton: options.showCancelButton ?? false,
 
-      confirmButtonText:
-        options.confirmButtonText ?? 'Aceptar',
+      confirmButtonText: options.confirmButtonText ?? 'Aceptar',
 
-      cancelButtonText:
-        options.cancelButtonText ?? 'Cancelar',
+      cancelButtonText: options.cancelButtonText ?? 'Cancelar',
 
       buttonsStyling: false,
 
@@ -92,9 +83,7 @@ export class AlertService {
   |--------------------------------------------------------------------------
   */
 
-  showToast(
-    options: ToastOptions,
-  ): void {
+  showToast(options: ToastOptions): void {
     void Swal.fire({
       toast: true,
       position: 'bottom-end',
@@ -111,9 +100,7 @@ export class AlertService {
       timerProgressBar: true,
 
       customClass: {
-        popup: this.getToastClass(
-          options.icon ?? 'success',
-        ),
+        popup: this.getToastClass(options.icon ?? 'success'),
         title: 'viaticos-toast-title',
         htmlContainer: 'viaticos-toast-description',
         timerProgressBar: 'viaticos-toast-progress',
@@ -127,10 +114,7 @@ export class AlertService {
   |--------------------------------------------------------------------------
   */
 
-  success(
-    title = 'Operación realizada correctamente',
-    description?: string,
-  ): void {
+  success(title = 'Operación realizada correctamente', description?: string): void {
     this.showToast({
       icon: 'success',
       title,
@@ -138,10 +122,7 @@ export class AlertService {
     });
   }
 
-  error(
-    title = 'Ocurrió un error',
-    description?: string,
-  ): void {
+  error(title = 'Ocurrió un error', description?: string): void {
     this.showToast({
       icon: 'error',
       title,
@@ -150,10 +131,7 @@ export class AlertService {
     });
   }
 
-  warning(
-    title: string,
-    description?: string,
-  ): void {
+  warning(title: string, description?: string): void {
     this.showToast({
       icon: 'warning',
       title,
@@ -162,10 +140,7 @@ export class AlertService {
     });
   }
 
-  info(
-    title: string,
-    description?: string,
-  ): void {
+  info(title: string, description?: string): void {
     this.showToast({
       icon: 'info',
       title,
@@ -179,26 +154,19 @@ export class AlertService {
   |--------------------------------------------------------------------------
   */
 
-  handleHttpError(
-    error: HttpErrorResponse,
-  ): void {
-    const response =
-      error.error as Partial<ApiErrorResponse>;
+  handleHttpError(error: HttpErrorResponse): void {
+    const response = error.error as Partial<ApiErrorResponse>;
 
-    const code =
-      response.error?.code;
+    const code = response.error?.code;
 
-    const backendMessage =
-      response.error?.message;
+    const backendMessage = response.error?.message;
 
     switch (code) {
-
       case 'DUPLICATE_RESOURCE':
         void this.showAlert({
           icon: 'warning',
           title: 'Registro duplicado',
-          description:
-            'Ya existe un banco registrado con ese nombre.',
+          description: backendMessage ?? 'Ya existe un registro con esos datos.',
         });
         return;
 
@@ -206,8 +174,7 @@ export class AlertService {
         void this.showAlert({
           icon: 'warning',
           title: 'Datos inválidos',
-          description:
-            this.getValidationMessage(response),
+          description: this.getValidationMessage(response),
         });
         return;
 
@@ -215,8 +182,7 @@ export class AlertService {
         void this.showAlert({
           icon: 'error',
           title: 'Permisos insuficientes',
-          description:
-            'No tienes permisos para realizar esta operación.',
+          description: 'No tienes permisos para realizar esta operación.',
         });
         return;
 
@@ -224,19 +190,16 @@ export class AlertService {
         void this.showAlert({
           icon: 'error',
           title: 'Registro no encontrado',
-          description:
-            'El registro solicitado no existe o ya no está disponible.',
+          description: 'El registro solicitado no existe o ya no está disponible.',
         });
         return;
-
     }
 
     if (error.status === 0) {
       void this.showAlert({
         icon: 'error',
         title: 'Sin conexión',
-        description:
-          'No fue posible establecer comunicación con el servidor.',
+        description: 'No fue posible establecer comunicación con el servidor.',
       });
       return;
     }
@@ -245,8 +208,7 @@ export class AlertService {
       void this.showAlert({
         icon: 'warning',
         title: 'Sesión no válida',
-        description:
-          'Tu sesión expiró o no es válida. Inicia sesión nuevamente.',
+        description: 'Tu sesión expiró o no es válida. Inicia sesión nuevamente.',
       });
       return;
     }
@@ -255,8 +217,7 @@ export class AlertService {
       void this.showAlert({
         icon: 'error',
         title: 'Permisos insuficientes',
-        description:
-          'No tienes permisos para realizar esta operación.',
+        description: 'No tienes permisos para realizar esta operación.',
       });
       return;
     }
@@ -264,9 +225,7 @@ export class AlertService {
     void this.showAlert({
       icon: 'error',
       title: 'Error',
-      description:
-        backendMessage ??
-        'Ocurrió un error inesperado. Intenta nuevamente.',
+      description: backendMessage ?? 'Ocurrió un error inesperado. Intenta nuevamente.',
     });
   }
 
@@ -276,55 +235,37 @@ export class AlertService {
   |--------------------------------------------------------------------------
   */
 
-  private getToastClass(
-    icon: SweetAlertIcon,
-  ): string {
-    const classes: Partial<
-      Record<SweetAlertIcon, string>
-    > = {
-      success:
-        'viaticos-toast viaticos-toast-success',
+  private getToastClass(icon: SweetAlertIcon): string {
+    const classes: Partial<Record<SweetAlertIcon, string>> = {
+      success: 'viaticos-toast viaticos-toast-success',
 
-      error:
-        'viaticos-toast viaticos-toast-error',
+      error: 'viaticos-toast viaticos-toast-error',
 
-      warning:
-        'viaticos-toast viaticos-toast-warning',
+      warning: 'viaticos-toast viaticos-toast-warning',
 
-      info:
-        'viaticos-toast viaticos-toast-info',
+      info: 'viaticos-toast viaticos-toast-info',
 
-      question:
-        'viaticos-toast viaticos-toast-info',
+      question: 'viaticos-toast viaticos-toast-info',
     };
 
-    return classes[icon] ??
-      'viaticos-toast viaticos-toast-info';
+    return classes[icon] ?? 'viaticos-toast viaticos-toast-info';
   }
 
-  private getValidationMessage(
-    response: Partial<ApiErrorResponse>,
-  ): string {
-    const details =
-      response.error?.details ?? [];
+  private getValidationMessage(response: Partial<ApiErrorResponse>): string {
+    const details = response.error?.details ?? [];
 
     if (!details.length) {
       return 'Revisa la información capturada.';
     }
 
     return details
-      .map(detail => {
-        const field =
-          detail.field ??
-          'Campo';
+      .map((detail) => {
+        const field = detail.field ?? 'Campo';
 
-        const issue =
-          detail.issue ??
-          'Valor inválido';
+        const issue = detail.issue ?? 'Valor inválido';
 
         return `${field}: ${issue}`;
       })
       .join('\n');
   }
-
 }
