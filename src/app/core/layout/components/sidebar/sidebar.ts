@@ -57,14 +57,9 @@ export class Sidebar {
           roles: ['ADMIN'],
         },
         {
-          label: 'Municipios',
-          route: '/catalogos/municipios',
+          label: 'Municipios y Zonas',
+          route: '/catalogos/municipios-zonas',
           roles: ['ADMIN'],
-        },
-        {
-          label: 'Zonas',
-          route: '/catalogos/zonas',
-          roles: ['ADMIN', 'SUPERVISOR'],
         },
         {
           label: 'Tabulador',

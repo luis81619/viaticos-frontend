@@ -32,4 +32,14 @@ export class MunicipioService extends BaseApiService<
     const params = new HttpParams().set('mode', 'assign');
     return this.http.patch<ApiResponse<Municipio>>(`${this.endpoint}/${id}`, request, { params });
   }
+
+  batchUpdate(request: {
+    ids: string[];
+    changes: { zonaId?: string; region?: string; descripcionZona?: string };
+  }): Observable<ApiResponse<{ actualizados: number }>> {
+    return this.http.patch<ApiResponse<{ actualizados: number }>>(
+      `${this.endpoint}/batch`,
+      request,
+    );
+  }
 }

@@ -11,18 +11,18 @@ import {
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
-import { UiModal } from '../../../../../shared/components/ui-modal/ui-modal';
-import { UiFormTextInput } from '../../../../../shared/components/ui-form-text-input/ui-form-text-input';
-import { UiFormSelectInput } from '../../../../../shared/components/ui-form-select-input/ui-form-select-input';
-import { UiButton } from '../../../../../shared/components/ui-button/ui-button';
+import { UiModal } from '../../../../shared/components/ui-modal/ui-modal';
+import { UiFormTextInput } from '../../../../shared/components/ui-form-text-input/ui-form-text-input';
+import { UiFormSelectInput } from '../../../../shared/components/ui-form-select-input/ui-form-select-input';
+import { UiButton } from '../../../../shared/components/ui-button/ui-button';
 
-import { SelectOption } from '../../../../../shared/interfaces/select-option.interface';
+import { SelectOption } from '../../../../shared/interfaces/select-option.interface';
 
-import { Municipio } from '../../interfaces/municipio.interface';
-import { MunicipioFormSubmitEvent } from '../../interfaces/municipio-form-submit-event.interface';
-import { EstadoService } from '../../services/estados.service';
-import { ZonaService } from '../../services/zonas.service';
-import { MunicipioService } from '../../services/municipios.service';
+import { Municipio } from '../interfaces/municipio.interface';
+import { MunicipioFormSubmitEvent } from '../interfaces/municipio-form-submit-event.interface';
+import { EstadoService } from '../services/estados.service';
+import { ZonaService } from '../services/zonas.service';
+import { MunicipioService } from '../services/municipios.service';
 
 @Component({
   selector: 'app-municipio-form-modal',
@@ -58,7 +58,19 @@ export class MunicipioFormModal {
     effect(() => {
       if (this.isOpen()) {
         this.loadEstados();
-        this.loadTodasLasZonas();
+
+        if (!this.municipio()) {
+          this.form.reset({
+            estadoId: '',
+            municipioId: '',
+            zonaId: '',
+            region: '',
+          });
+          this.municipioOptions.set([]);
+          this.zonaOptions.set([]);
+          this.form.markAsPristine();
+          this.form.markAsUntouched();
+        }
       }
     });
 
@@ -78,6 +90,7 @@ export class MunicipioFormModal {
 
         if (estadoId) {
           this.loadMunicipiosPorEstado(estadoId, municipio.id);
+          this.loadZonasPorEstado(estadoId);
         }
       } else {
         this.form.reset({
@@ -87,6 +100,7 @@ export class MunicipioFormModal {
           region: '',
         });
         this.municipioOptions.set([]);
+        this.zonaOptions.set([]);
       }
 
       this.form.markAsPristine();
@@ -102,10 +116,13 @@ export class MunicipioFormModal {
         }
 
         this.form.controls.municipioId.setValue('');
+        this.form.controls.zonaId.setValue('');
         this.municipioOptions.set([]);
+        this.zonaOptions.set([]);
 
         if (estadoId) {
           this.loadMunicipiosPorEstado(estadoId);
+          this.loadZonasPorEstado(estadoId);
         }
       });
   }
@@ -129,19 +146,21 @@ export class MunicipioFormModal {
       });
   }
 
-  private loadTodasLasZonas(): void {
+  private loadZonasPorEstado(estadoId: string): void {
+    if (!estadoId) {
+      this.zonaOptions.set([]);
+      return;
+    }
+
     this.zonaService
-      .getAll()
+      .getAll(estadoId)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (response) => {
-          const options: SelectOption<string>[] = response.data.map((zona) => {
-            const estadoNombre = zona.estado?.nombre ?? 'Sin estado';
-            return {
-              label: `${estadoNombre} — ZONA ${zona.zona} — ${zona.nombre}`,
-              value: zona.id,
-            };
-          });
+          const options: SelectOption<string>[] = response.data.map((zona) => ({
+            label: `Zona ${zona.zona}`,
+            value: zona.id,
+          }));
           this.zonaOptions.set(options);
         },
         error: (error) => {

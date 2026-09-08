@@ -16,6 +16,7 @@ export interface Municipio extends BaseRecord {
     id: string;
     nombre: string;
     zona: string;
+    descripcion?: string;
   } | null;
 
 }
