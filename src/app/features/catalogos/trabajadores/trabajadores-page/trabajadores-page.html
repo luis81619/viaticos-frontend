@@ -1,0 +1,35 @@
+<div class="space-y-4">
+  <div class="flex items-center justify-between">
+    <h1 class="text-2xl font-semibold text-gray-800">Catálogo de Trabajadores</h1>
+
+    <button
+      type="button"
+      title="Sincronizar con RH"
+      class="flex items-center gap-2 rounded-md border border-orange-400 bg-white px-4 py-2 text-sm font-medium text-orange-500 shadow-sm transition hover:bg-orange-50 disabled:cursor-not-allowed disabled:opacity-50"
+      [disabled]="store.isSyncing()"
+      (click)="onSyncClick()"
+    >
+      <span>{{ store.isSyncing() ? '⏳' : '↻' }}</span>
+      <span>{{ store.isSyncing() ? 'Sincronizando...' : 'Sincronizar con RH' }}</span>
+    </button>
+  </div>
+
+  <app-ui-pagination
+    [totalItems]="store.totalRecords()"
+    [page]="store.currentPage()"
+    [pageSize]="store.pageSize()"
+    (pageChange)="onPageChange($event)"
+    (pageSizeChange)="onPageSizeChange($event)"
+  />
+
+  <app-ui-data-table
+    [columns]="columns()"
+    [data]="store.trabajadores()"
+    [loading]="store.isLoading()"
+    (filterChange)="onFilterChange($event)"
+  />
+</div>
+
+<ng-template #nombreCompletoTemplate let-row>
+  {{ row.apellidoPaterno }} {{ row.apellidoMaterno }} {{ row.nombre }}
+</ng-template>

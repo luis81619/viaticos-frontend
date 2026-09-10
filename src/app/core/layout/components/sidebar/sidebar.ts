@@ -66,6 +66,11 @@ export class Sidebar {
           route: '/catalogos/tabulador',
           roles: ['ADMIN'],
         },
+        {
+          label: 'Trabajadores',
+          route: '/catalogos/trabajadores',
+          roles: ['ADMIN'],
+        },
       ],
     },
     {

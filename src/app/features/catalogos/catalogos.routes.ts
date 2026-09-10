@@ -44,4 +44,11 @@ export const catalogosRoutes: Routes = [
     loadComponent: () =>
       import('./municipios-zonas/municipios-zonas-page/municipios-zonas-page'),
   },
+
+  {
+    path: 'trabajadores',
+
+    loadComponent: () =>
+      import('./trabajadores/trabajadores-page/trabajadores-page'),
+  },
 ];
