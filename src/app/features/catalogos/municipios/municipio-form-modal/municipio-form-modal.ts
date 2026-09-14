@@ -14,19 +14,18 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { UiModal } from '../../../../shared/components/ui-modal/ui-modal';
 import { UiFormTextInput } from '../../../../shared/components/ui-form-text-input/ui-form-text-input';
 import { UiFormSelectInput } from '../../../../shared/components/ui-form-select-input/ui-form-select-input';
-import { UiButton } from '../../../../shared/components/ui-button/ui-button';
+import { UiFormFooter } from '../../../../shared/components/ui-form-footer/ui-form-footer';
 
 import { SelectOption } from '../../../../shared/interfaces/select-option.interface';
 
-import { Municipio } from '../interfaces/municipio.interface';
-import { MunicipioFormSubmitEvent } from '../interfaces/municipio-form-submit-event.interface';
+import { Municipio, MunicipioFormSubmitEvent } from '../interfaces/municipio.interfaces';
 import { EstadoService } from '../services/estados.service';
 import { ZonaService } from '../services/zonas.service';
 import { MunicipioService } from '../services/municipios.service';
 
 @Component({
   selector: 'app-municipio-form-modal',
-  imports: [UiModal, ReactiveFormsModule, UiFormTextInput, UiFormSelectInput, UiButton],
+  imports: [UiModal, ReactiveFormsModule, UiFormTextInput, UiFormSelectInput, UiFormFooter],
   templateUrl: './municipio-form-modal.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -55,58 +54,48 @@ export class MunicipioFormModal {
   });
 
   constructor() {
+    // Al abrir el modal cargamos catálogos y limpiamos si es modo crear.
     effect(() => {
-      if (this.isOpen()) {
-        this.loadEstados();
+      if (!this.isOpen()) return;
 
-        if (!this.municipio()) {
-          this.form.reset({
-            estadoId: '',
-            municipioId: '',
-            zonaId: '',
-            region: '',
-          });
-          this.municipioOptions.set([]);
-          this.zonaOptions.set([]);
-          this.form.markAsPristine();
-          this.form.markAsUntouched();
-        }
+      this.loadEstados();
+      this.loadZonasGlobales();
+
+      if (!this.municipio()) {
+        this.form.reset(this.blankFormValue());
+        this.municipioOptions.set([]);
+        this.form.markAsPristine();
+        this.form.markAsUntouched();
       }
     });
 
+    // Cuando cambia el municipio (modo editar), rellenamos el form.
     effect(() => {
       const municipio = this.municipio();
 
       if (municipio) {
         const estadoId = municipio.estado?.id ?? '';
-        const zonaId = municipio.zona?.id ?? '';
 
         this.form.reset({
           estadoId,
           municipioId: municipio.id,
-          zonaId,
+          zonaId: municipio.zona?.id ?? '',
           region: municipio.region ?? '',
         });
 
         if (estadoId) {
           this.loadMunicipiosPorEstado(estadoId, municipio.id);
-          this.loadZonasPorEstado(estadoId);
         }
       } else {
-        this.form.reset({
-          estadoId: '',
-          municipioId: '',
-          zonaId: '',
-          region: '',
-        });
+        this.form.reset(this.blankFormValue());
         this.municipioOptions.set([]);
-        this.zonaOptions.set([]);
       }
 
       this.form.markAsPristine();
       this.form.markAsUntouched();
     });
 
+    // Cascada estado → municipios. La zona ya no depende del estado.
     this.form.controls.estadoId.valueChanges
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((estadoId) => {
@@ -116,15 +105,21 @@ export class MunicipioFormModal {
         }
 
         this.form.controls.municipioId.setValue('');
-        this.form.controls.zonaId.setValue('');
         this.municipioOptions.set([]);
-        this.zonaOptions.set([]);
 
         if (estadoId) {
           this.loadMunicipiosPorEstado(estadoId);
-          this.loadZonasPorEstado(estadoId);
         }
       });
+  }
+
+  private blankFormValue() {
+    return {
+      estadoId: '',
+      municipioId: '',
+      zonaId: '',
+      region: '',
+    };
   }
 
   private loadEstados(): void {
@@ -133,11 +128,12 @@ export class MunicipioFormModal {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (response) => {
-          const options: SelectOption<string>[] = response.data.map((estado) => ({
-            label: estado.nombre,
-            value: estado.id,
-          }));
-          this.estadoOptions.set(options);
+          this.estadoOptions.set(
+            response.data.map((estado) => ({
+              label: estado.nombre,
+              value: estado.id,
+            })),
+          );
         },
         error: (error) => {
           console.error('Error al obtener estados:', error);
@@ -146,22 +142,19 @@ export class MunicipioFormModal {
       });
   }
 
-  private loadZonasPorEstado(estadoId: string): void {
-    if (!estadoId) {
-      this.zonaOptions.set([]);
-      return;
-    }
-
+  // Carga las 4 zonas globales (I/II/III/IV). No depende del estado.
+  private loadZonasGlobales(): void {
     this.zonaService
-      .getAll(estadoId)
+      .getAll()
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (response) => {
-          const options: SelectOption<string>[] = response.data.map((zona) => ({
-            label: `Zona ${zona.zona}`,
-            value: zona.id,
-          }));
-          this.zonaOptions.set(options);
+          this.zonaOptions.set(
+            response.data.map((zona) => ({
+              label: `Zona ${zona.zona}`,
+              value: zona.id,
+            })),
+          );
         },
         error: (error) => {
           console.error('Error al obtener zonas:', error);
@@ -181,11 +174,9 @@ export class MunicipioFormModal {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (response) => {
-          const options: SelectOption<string>[] = response.data.map((m) => ({
-            label: m.nombre,
-            value: m.id,
-          }));
-          this.municipioOptions.set(options);
+          this.municipioOptions.set(
+            response.data.map((m) => ({ label: m.nombre, value: m.id })),
+          );
 
           if (preselectId) {
             this.form.controls.municipioId.setValue(preselectId);
@@ -208,33 +199,18 @@ export class MunicipioFormModal {
 
     const value = this.form.getRawValue();
 
-    const request = {
-      zonaId: value.zonaId,
-      region: value.region.trim().toUpperCase(),
-    };
-
-    const submode: 'assign' | 'edit' = this.municipio() ? 'edit' : 'assign';
-
     this.saved.emit({
       mode: 'update',
       id: value.municipioId,
-      request,
-      submode,
+      request: {
+        zonaId: value.zonaId,
+        region: value.region.trim().toUpperCase(),
+      },
+      submode: this.municipio() ? 'edit' : 'assign',
     });
   }
 
   onCancel(): void {
-    this.form.reset({
-      estadoId: '',
-      municipioId: '',
-      zonaId: '',
-      region: '',
-    });
-
-    this.form.markAsPristine();
-    this.form.markAsUntouched();
-    this.municipioOptions.set([]);
-
     this.close.emit();
   }
 }

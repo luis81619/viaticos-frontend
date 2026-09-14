@@ -3,10 +3,12 @@ import { DestroyRef, Injectable, computed, inject, signal } from '@angular/core'
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { finalize } from 'rxjs';
 
-import { Municipio } from '../../municipios/interfaces/municipio.interface';
-import { MunicipioQuery } from '../../municipios/interfaces/municipio-query.interface';
+import {
+  Municipio,
+  MunicipioQuery,
+  UpdateMunicipioRequest,
+} from '../../municipios/interfaces/municipio.interfaces';
 import { MunicipioService } from '../../municipios/services/municipios.service';
-import { UpdateMunicipioRequest } from '../../municipios/interfaces/update-municipio-request.interface';
 import { AlertService } from '../../../../shared/services/alert.service';
 
 @Injectable()
@@ -47,7 +49,7 @@ export class MunicipiosZonasStore {
 
   setSearch(term: string): void {
     this._search.set(term);
-    // Debounce para no lanzar request en cada tecla
+
     if (this.searchDebounceHandle) clearTimeout(this.searchDebounceHandle);
     this.searchDebounceHandle = setTimeout(() => this.load(), 300);
   }
@@ -60,7 +62,7 @@ export class MunicipiosZonasStore {
     const estadoId = this._estadoId();
     const term = this._search().trim();
 
-    // Sin estado ni término, no cargamos nada
+
     if (!estadoId && !term) {
       this._municipios.set([]);
       this._loadError.set(null);

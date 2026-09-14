@@ -27,6 +27,14 @@
     (actionClick)="onAction($event)"
     (filterChange)="onFilterChange($event)"
   />
+
+  <app-ui-pagination
+    [totalItems]="store.totalRecords()"
+    [page]="store.currentPage()"
+    [pageSize]="store.pageSize()"
+    (pageChange)="onPageChange($event)"
+    (pageSizeChange)="onPageSizeChange($event)"
+  />
 </div>
 
 <ng-template #statusTemplate let-row>

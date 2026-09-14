@@ -3,11 +3,13 @@ import { DestroyRef, Injectable, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { finalize } from 'rxjs';
 
-import { Municipio } from '../interfaces/municipio.interface';
-import { MunicipioQuery } from '../interfaces/municipio-query.interface';
+import {
+  CreateMunicipioRequest,
+  Municipio,
+  MunicipioQuery,
+  UpdateMunicipioRequest,
+} from '../interfaces/municipio.interfaces';
 import { MunicipioService } from '../services/municipios.service';
-import { CreateMunicipioRequest } from '../interfaces/create-municipio-request.interface';
-import { UpdateMunicipioRequest } from '../interfaces/update-municipio-request.interface';
 import { AlertService } from '../../../../shared/services/alert.service';
 
 interface MunicipioFilters {

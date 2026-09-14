@@ -7,9 +7,11 @@ import { environment } from '../../../../../environments/environments';
 import { BaseApiService } from '../../../../shared/services/base-api.service';
 import { ApiResponse } from '../../../../shared/interfaces/api/api-response.interface';
 
-import { Trabajador } from '../interfaces/trabajador.interface';
-import { TrabajadorQuery } from '../interfaces/trabajador-query.interface';
-import { SyncTrabajadoresResponse } from '../interfaces/sync-response.interface';
+import {
+  SyncTrabajadoresResponse,
+  Trabajador,
+  TrabajadorQuery,
+} from '../interfaces/trabajador.interfaces';
 
 @Injectable({ providedIn: 'root' })
 export class TrabajadorService extends BaseApiService<

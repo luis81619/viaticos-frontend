@@ -2,15 +2,15 @@ import {
   AfterViewInit,
   ChangeDetectionStrategy,
   Component,
-  signal,
+  OnInit,
   TemplateRef,
   ViewChild,
   inject,
-  OnInit,
+  signal,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
-import { Vehiculo } from '../interfaces/vehiculo.interface';
+import { Vehiculo, VehiculoFormSubmitEvent } from '../interfaces/vehiculo.interfaces';
 import { VehiculoStore } from '../store/vehiculo.store';
 
 import { VehiculoFormModal } from './vehiculo-form-modal/vehiculo-form-modal';
@@ -23,7 +23,6 @@ import { TableAction } from '../../../../shared/interfaces/table-action.interfac
 import { TableActionEvent } from '../../../../shared/interfaces/table-action-event.interface';
 import { TableColumn } from '../../../../shared/interfaces/table-column.interface';
 import { TableFilterEvent } from '../../../../shared/interfaces/table-filter-event.interface';
-import { VehiculoFormSubmitEvent } from '../interfaces/vehiculo-form-submit-event.interface';
 
 import { VEHICULO_TIPO_OPTIONS, getVehiculoTipoLabel } from '../enums/vehiculo-tipo.enum';
 import { VEHICULO_CLASE_OPTIONS, getVehiculoClaseLabel } from '../enums/vehiculo-clase.enum';
@@ -41,27 +40,24 @@ export default class VehiculosPage implements OnInit, AfterViewInit {
   readonly getVehiculoTipoLabel = getVehiculoTipoLabel;
   readonly getVehiculoClaseLabel = getVehiculoClaseLabel;
 
+  isVehiculoModalOpen = signal(false);
+  selectedVehiculo = signal<Vehiculo | null>(null);
+
   ngOnInit(): void {
     this.store.load();
   }
 
-  /* MODAL */
-
-  isVehiculoModalOpen = signal(false);
-
-  selectedVehiculo = signal<Vehiculo | null>(null);
-
-  openVehiculoModal() {
+  openVehiculoModal(): void {
     this.selectedVehiculo.set(null);
     this.isVehiculoModalOpen.set(true);
   }
 
-  openEditModal(vehiculo: Vehiculo) {
+  openEditModal(vehiculo: Vehiculo): void {
     this.selectedVehiculo.set(vehiculo);
     this.isVehiculoModalOpen.set(true);
   }
 
-  closeVehiculoModal() {
+  closeVehiculoModal(): void {
     this.isVehiculoModalOpen.set(false);
     this.selectedVehiculo.set(null);
   }
@@ -75,10 +71,9 @@ export default class VehiculosPage implements OnInit, AfterViewInit {
   }
 
   actions: TableAction<Vehiculo>[] = [
-    {
-      action: 'edit',
-      label: 'Editar',
-    },
+    { action: 'edit', label: 'Editar' },
+    { action: 'deactivate', label: 'Desactivar', danger: true, visible: (row) => row.status },
+    { action: 'activate', label: 'Activar', visible: (row) => !row.status },
   ];
 
   columns = signal<TableColumn<Vehiculo>[]>([]);
@@ -95,20 +90,14 @@ export default class VehiculosPage implements OnInit, AfterViewInit {
   ngAfterViewInit(): void {
     this.columns.set([
       {
-        key: 'submarca',
-        title: 'Submarca',
-        filter: {
-          type: 'text',
-          placeholder: 'Submarca...',
-        },
-      },
-      {
         key: 'marca',
         title: 'Marca',
-        filter: {
-          type: 'text',
-          placeholder: 'Marca...',
-        },
+        filter: { type: 'text', placeholder: 'Marca...' },
+      },
+      {
+        key: 'submarca',
+        title: 'Submarca',
+        filter: { type: 'text', placeholder: 'Submarca...' },
       },
       {
         key: 'modelo',
@@ -121,10 +110,7 @@ export default class VehiculosPage implements OnInit, AfterViewInit {
       {
         key: 'placa',
         title: 'Placa',
-        filter: {
-          type: 'text',
-          placeholder: 'Placa...',
-        },
+        filter: { type: 'text', placeholder: 'Placa...' },
       },
       {
         key: 'tipo',
@@ -144,41 +130,45 @@ export default class VehiculosPage implements OnInit, AfterViewInit {
           options: [{ label: 'Todas las clases', value: '' }, ...VEHICULO_CLASE_OPTIONS],
         },
       },
+      {
+        key: 'status',
+        title: 'Estatus',
+        template: this.statusTemplate,
+        filter: {
+          type: 'select',
+          options: [
+            { label: 'Todos', value: '' },
+            { label: 'Activo', value: 'true' },
+            { label: 'Inactivo', value: 'false' },
+          ],
+        },
+      },
     ]);
   }
 
   onFilterChange(event: TableFilterEvent): void {
-    if (
-      event.key !== 'submarca' &&
-      event.key !== 'marca' &&
-      event.key !== 'placa' &&
-      event.key !== 'tipo' &&
-      event.key !== 'clase' &&
-      event.key !== 'status'
-    ) {
-      return;
-    }
-    this.store.setFilter(event.key, String(event.value));
+    const allowed: Array<keyof any> = ['submarca', 'marca', 'placa', 'tipo', 'clase', 'status'];
+    if (!allowed.includes(event.key)) return;
+    this.store.setFilter(event.key as any, String(event.value));
   }
 
-  onAction(event: TableActionEvent<Vehiculo>) {
+  onAction(event: TableActionEvent<Vehiculo>): void {
     switch (event.action) {
       case 'edit':
         this.openEditModal(event.row);
+        break;
+      case 'deactivate':
+      case 'activate':
+        this.store.toggleStatus(event.row);
         break;
     }
   }
 
   onVehiculoSaved(event: VehiculoFormSubmitEvent): void {
     if (event.mode === 'update') {
-      this.store.update(event.id, event.request, () => {
-        this.closeVehiculoModal();
-      });
+      this.store.update(event.id, event.request, () => this.closeVehiculoModal());
       return;
     }
-
-    this.store.create(event.request, () => {
-      this.closeVehiculoModal();
-    });
+    this.store.create(event.request, () => this.closeVehiculoModal());
   }
 }

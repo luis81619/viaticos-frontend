@@ -9,15 +9,14 @@ import {
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
-import { RouterLink } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 import { MunicipiosZonasStore } from '../store/municipios-zonas.store';
-import { Municipio } from '../../municipios/interfaces/municipio.interface';
-import { MunicipioFormSubmitEvent } from '../../municipios/interfaces/municipio-form-submit-event.interface';
+import { Municipio, MunicipioFormSubmitEvent } from '../../municipios/interfaces/municipio.interfaces';
 import { EstadoService } from '../../municipios/services/estados.service';
 import { ZonaService } from '../../municipios/services/zonas.service';
 import { MunicipioFormModal } from '../../municipios/municipio-form-modal/municipio-form-modal';
+import { TarifasModal } from '../tarifas-modal/tarifas-modal';
 
 interface EstadoOption {
   label: string;
@@ -33,7 +32,13 @@ type TabPanel = 'detalles' | 'editar';
 
 @Component({
   selector: 'app-municipios-zonas-page',
-  imports: [CommonModule, FormsModule, ReactiveFormsModule, RouterLink, MunicipioFormModal],
+  imports: [
+    CommonModule,
+    FormsModule,
+    ReactiveFormsModule,
+    MunicipioFormModal,
+    TarifasModal,
+  ],
   providers: [MunicipiosZonasStore],
   templateUrl: './municipios-zonas-page.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -50,6 +55,8 @@ export default class MunicipiosZonasPage implements OnInit {
 
   isMunicipioModalOpen = signal(false);
   selectedMunicipioForModal = signal<Municipio | null>(null);
+
+  isTarifasModalOpen = signal(false);
 
   activeTab = signal<TabPanel>('detalles');
 
@@ -69,9 +76,7 @@ export default class MunicipiosZonasPage implements OnInit {
           region: municipio.region ?? '',
           descripcionZona: municipio.zona?.descripcion ?? '',
         });
-        if (municipio.estado?.id) {
-          this.loadZonasPorEstado(municipio.estado.id);
-        }
+        this.loadZonasGlobales();
       } else {
         this.activeTab.set('detalles');
         this.editForm.reset({ zonaId: '', region: '', descripcionZona: '' });
@@ -103,17 +108,18 @@ export default class MunicipiosZonasPage implements OnInit {
       });
   }
 
-  private loadZonasPorEstado(estadoId: string): void {
+  private loadZonasGlobales(): void {
     this.zonaService
-      .getAll(estadoId)
+      .getAll()
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (response) => {
-          const options: ZonaOption[] = response.data.map((zona) => ({
-            label: `Zona ${zona.zona}`,
-            value: zona.id,
-          }));
-          this.zonaOptions.set(options);
+          this.zonaOptions.set(
+            response.data.map((zona) => ({
+              label: `Zona ${zona.zona}`,
+              value: zona.id,
+            })),
+          );
         },
         error: (error) => {
           console.error('Error al obtener zonas:', error);
@@ -161,6 +167,14 @@ export default class MunicipiosZonasPage implements OnInit {
   closeMunicipioModal(): void {
     this.isMunicipioModalOpen.set(false);
     this.selectedMunicipioForModal.set(null);
+  }
+
+  openTarifasModal(): void {
+    this.isTarifasModalOpen.set(true);
+  }
+
+  closeTarifasModal(): void {
+    this.isTarifasModalOpen.set(false);
   }
 
   onMunicipioSaved(event: MunicipioFormSubmitEvent): void {

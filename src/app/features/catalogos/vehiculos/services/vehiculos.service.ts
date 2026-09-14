@@ -8,10 +8,12 @@ import { environment } from '../../../../../environments/environments';
 
 import { BaseApiService } from '../../../../shared/services/base-api.service';
 
-import { Vehiculo } from '../interfaces/vehiculo.interface';
-import { VehiculoQuery } from '../interfaces/vehiculo-query.interface';
-import { CreateVehiculoRequest } from '../interfaces/create-vehiculo-request.interface';
-import { UpdateVehiculoRequest } from '../interfaces/update-vehiculo-request.interface';
+import {
+  CreateVehiculoRequest,
+  UpdateVehiculoRequest,
+  Vehiculo,
+  VehiculoQuery,
+} from '../interfaces/vehiculo.interfaces';
 
 @Injectable({
   providedIn: 'root',

@@ -1,33 +1,13 @@
-<div class="space-y-4">
-  <!-- TÍTULO -->
-  <h1 class="text-2xl font-semibold text-orange-500">TABULADOR DE VIÁTICOS</h1>
+<section class="space-y-6">
+  <header>
+    <h1 class="text-2xl font-semibold text-orange-500">
+      Tabulador de Viáticos
+    </h1>
 
-  <!-- MONEDA + BOTÓN ACTUALIZAR -->
-  <div
-    class="flex items-center justify-between rounded-md border border-gray-200 bg-white p-3 shadow-sm"
-  >
-    <div class="flex items-center gap-3">
-      <label class="text-sm text-gray-600">Moneda</label>
-      <select
-        class="rounded-md border border-gray-300 px-3 py-2 text-sm"
-        [ngModel]="moneda()"
-        (ngModelChange)="moneda.set($event)"
-      >
-        @for (opt of monedaOptions; track opt.value) {
-          <option [value]="opt.value">{{ opt.label }}</option>
-        }
-      </select>
-    </div>
-
-    <button
-      type="button"
-      class="rounded-md border border-orange-400 bg-white px-4 py-2 text-sm font-medium text-orange-500 shadow-sm hover:bg-orange-50 disabled:opacity-50"
-      [disabled]="store.isSaving()"
-      (click)="actualizarTabulador()"
-    >
-      {{ store.isSaving() ? 'Guardando…' : '↻ Actualizar tabulador' }}
-    </button>
-  </div>
+    <p class="mt-1 text-sm text-gray-600">
+      Captura las tarifas de hospedaje, alimentos y peaje por nivel y zona.
+    </p>
+  </header>
 
   <!-- LOADING -->
   @if (store.isLoading()) {
@@ -92,7 +72,7 @@
                         <span>🛏️</span> Hospedaje
                       </label>
                       <div class="flex items-center gap-1">
-                        <span class="text-xs text-gray-500">{{ moneda() }} $</span>
+                        <span class="text-xs text-gray-500">$</span>
                         <input
                           type="number"
                           min="0"
@@ -110,7 +90,7 @@
                         <span>🍽️</span> Alimentación
                       </label>
                       <div class="flex items-center gap-1">
-                        <span class="text-xs text-gray-500">{{ moneda() }} $</span>
+                        <span class="text-xs text-gray-500">$</span>
                         <input
                           type="number"
                           min="0"
@@ -128,7 +108,7 @@
                         <span>🚗</span> Peaje
                       </label>
                       <div class="flex items-center gap-1">
-                        <span class="text-xs text-gray-500">{{ moneda() }} $</span>
+                        <span class="text-xs text-gray-500">$</span>
                         <input
                           type="number"
                           min="0"
@@ -152,5 +132,36 @@
         </div>
       }
     </div>
+
+    <!-- BOTÓN GUARDAR CAMBIOS -->
+    @if (store.niveles().length > 0) {
+      <div class="flex justify-end pt-2">
+        <div class="group relative">
+          <app-ui-button
+            variant="primary"
+            [disabled]="store.isSaving() || store.isLoading()"
+            (click)="actualizarTabulador()"
+          >
+            <lucide-icon
+              [img]="SaveIcon"
+              class="h-5 w-5"
+            />
+
+            Guardar cambios
+          </app-ui-button>
+
+          <div
+            class="pointer-events-none absolute right-0 top-full z-20 mt-2 whitespace-nowrap rounded-md bg-gray-900 px-3 py-1.5 text-xs text-white opacity-0 shadow-lg transition-opacity group-hover:opacity-100"
+          >
+            Guardar cambios del tabulador
+          </div>
+        </div>
+      </div>
+    }
   }
-</div>
+
+  <app-ui-loading-overlay
+    [visible]="store.isSaving()"
+    message="Guardando tabulador..."
+  />
+</section>

@@ -35,17 +35,13 @@
     (filterChange)="onFilterChange($event)"
   />
 
-  <ng-template
-    #statusTemplate
-    let-row
-  >
-
-    <app-ui-badge
-      [label]="row.isActive ? 'Activo' : 'Inactivo'"
-      [variant]="row.isActive ? 'success' : 'danger'"
-    />
-
-  </ng-template>
+  <app-ui-pagination
+    [totalItems]="store.totalRecords()"
+    [page]="store.currentPage()"
+    [pageSize]="store.pageSize()"
+    (pageChange)="onPageChange($event)"
+    (pageSizeChange)="onPageSizeChange($event)"
+  />
 
 </div>
 

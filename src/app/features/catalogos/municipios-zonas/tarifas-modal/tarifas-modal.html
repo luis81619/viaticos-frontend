@@ -1,0 +1,100 @@
+<app-ui-modal
+  [isOpen]="isOpen()"
+  title="Tabulador de Viáticos vigente"
+  [size]="'2xl'"
+  (close)="onCancel()"
+>
+  <div class="space-y-4">
+    <p class="text-sm text-gray-600">
+      Estas son las tarifas vigentes por nivel de aplicación y zona.
+    </p>
+
+    @if (isLoading()) {
+      <div class="rounded-md bg-gray-50 p-6 text-center text-sm text-gray-500">
+        Cargando tabulador...
+      </div>
+    } @else if (loadError()) {
+      <div class="rounded-md bg-red-50 p-4 text-sm text-red-700">
+        {{ loadError() }}
+      </div>
+    } @else {
+      <div class="overflow-x-auto rounded-md border border-gray-200">
+        <table class="min-w-full text-sm">
+          <thead class="bg-gray-50 text-xs uppercase text-gray-600">
+            <tr>
+              <th class="px-3 py-2 text-left">Nivel de aplicación</th>
+              @for (zona of zonas; track zona) {
+                <th class="px-3 py-2 text-center">
+                  <span
+                    class="inline-block rounded-md px-2 py-0.5 font-semibold"
+                    [class]="colorZona(zona)"
+                  >
+                    Zona {{ zona }}
+                  </span>
+                </th>
+              }
+            </tr>
+          </thead>
+
+          <tbody class="divide-y divide-gray-100">
+            @for (grupo of niveles(); track grupo.nivel.id) {
+              <tr class="align-top hover:bg-gray-50">
+                <td class="px-3 py-3 font-medium text-gray-800">
+                  {{ grupo.nivel.nombre }}
+                </td>
+
+                @for (zona of zonas; track zona) {
+                  <td class="px-3 py-3 text-xs text-gray-700">
+                    @if (tarifaPorZona(grupo, zona); as t) {
+                      <div class="space-y-1">
+                        <div class="flex items-center justify-between gap-2">
+                          <span class="text-gray-500">🛏️ Hospedaje</span>
+                          <span class="font-mono">$ {{ t.tarifaHospedaje | number:'1.2-2' }}</span>
+                        </div>
+                        <div class="flex items-center justify-between gap-2">
+                          <span class="text-gray-500">🍽️ Alimentos</span>
+                          <span class="font-mono">$ {{ t.tarifaAlimentos | number:'1.2-2' }}</span>
+                        </div>
+                        <div class="flex items-center justify-between gap-2">
+                          <span class="text-gray-500">🚗 Peaje</span>
+                          <span class="font-mono">
+                            @if (t.tarifaPeaje != null) {
+                              $ {{ t.tarifaPeaje | number:'1.2-2' }}
+                            } @else {
+                              <span class="italic text-gray-400">—</span>
+                            }
+                          </span>
+                        </div>
+                      </div>
+                    } @else {
+                      <span class="italic text-gray-400">Sin tarifa</span>
+                    }
+                  </td>
+                }
+              </tr>
+            } @empty {
+              <tr>
+                <td [attr.colspan]="zonas.length + 1" class="px-3 py-6 text-center text-gray-500">
+                  No hay niveles de aplicación configurados.
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <div
+        class="flex items-start gap-2 rounded-md border border-gray-200 bg-gray-50 p-3 text-xs text-gray-600"
+      >
+        <span class="text-base leading-none">ⓘ</span>
+        <span>Tarifas en pesos mexicanos (MXN).</span>
+      </div>
+    }
+
+    <div class="flex justify-end border-t border-gray-100 pt-4">
+      <app-ui-button variant="secondary" type="button" (click)="onCancel()">
+        Cerrar
+      </app-ui-button>
+    </div>
+  </div>
+</app-ui-modal>

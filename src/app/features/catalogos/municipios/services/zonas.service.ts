@@ -1,4 +1,4 @@
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 
 import { Observable } from 'rxjs';
@@ -14,14 +14,9 @@ import { Zona } from '../interfaces/zona.interface';
 export class ZonaService {
   private readonly http = inject(HttpClient);
 
-  private readonly endpoint =
-    `${environment.viaticos.apiUrl}/catalogos/zonas`;
+  private readonly endpoint = `${environment.viaticos.apiUrl}/catalogos/zonas`;
 
-  getAll(estadoId?: string): Observable<ApiResponse<Zona[]>> {
-    let params = new HttpParams();
-    if (estadoId) {
-      params = params.set('estadoId', estadoId);
-    }
-    return this.http.get<ApiResponse<Zona[]>>(this.endpoint, { params });
+  getAll(): Observable<ApiResponse<Zona[]>> {
+    return this.http.get<ApiResponse<Zona[]>>(this.endpoint);
   }
 }

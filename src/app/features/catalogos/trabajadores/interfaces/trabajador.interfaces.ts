@@ -1,3 +1,5 @@
+import { BaseQuery } from '../../../../shared/interfaces/api/base-query.interface';
+
 export interface Trabajador {
   id: string;
 
@@ -26,4 +28,17 @@ export interface Trabajador {
 
   createdAt: string | Date;
   updatedAt: string | Date;
+}
+
+export interface TrabajadorQuery extends BaseQuery {
+  search?: string;
+}
+
+export interface SyncTrabajadoresResponse {
+  received: number;
+  inserted: number;
+  updated: number;
+  reactivated: number;
+  deactivated: number;
+  done: boolean;
 }

@@ -1,13 +1,20 @@
 import { DestroyRef, Injectable, inject, signal } from '@angular/core';
 
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { HttpClient } from '@angular/common/http';
 import { finalize } from 'rxjs';
 
-import { Vehiculo } from '../interfaces/vehiculo.interface';
-import { VehiculoQuery } from '../interfaces/vehiculo-query.interface';
+import { environment } from '../../../../../environments/environments';
+
+import { ApiResponse } from '../../../../shared/interfaces/api/api-response.interface';
+
+import {
+  CreateVehiculoRequest,
+  UpdateVehiculoRequest,
+  Vehiculo,
+  VehiculoQuery,
+} from '../interfaces/vehiculo.interfaces';
 import { VehiculoService } from '../services/vehiculos.service';
-import { CreateVehiculoRequest } from '../interfaces/create-vehiculo-request.interface';
-import { UpdateVehiculoRequest } from '../interfaces/update-vehiculo-request.interface';
 import { AlertService } from '../../../../shared/services/alert.service';
 import { VehiculoTipo } from '../enums/vehiculo-tipo.enum';
 import { VehiculoClase } from '../enums/vehiculo-clase.enum';
@@ -21,23 +28,26 @@ interface VehiculoFilters {
   status: string;
 }
 
+const EMPTY_FILTERS: VehiculoFilters = {
+  submarca: '',
+  marca: '',
+  placa: '',
+  tipo: '',
+  clase: '',
+  status: '',
+};
+
 @Injectable()
 export class VehiculoStore {
+  private readonly http = inject(HttpClient);
   private readonly alertService = inject(AlertService);
   private readonly vehiculoService = inject(VehiculoService);
   private readonly destroyRef = inject(DestroyRef);
 
+  private readonly endpoint = `${environment.viaticos.apiUrl}/catalogos/vehiculos`;
+
   private readonly _vehiculos = signal<Vehiculo[]>([]);
-
-  private readonly _filters = signal<VehiculoFilters>({
-    submarca: '',
-    marca: '',
-    placa: '',
-    tipo: '',
-    clase: '',
-    status: '',
-  });
-
+  private readonly _filters = signal<VehiculoFilters>({ ...EMPTY_FILTERS });
   private readonly _currentPage = signal(1);
   private readonly _pageSize = signal(25);
   private readonly _totalRecords = signal(0);
@@ -57,38 +67,7 @@ export class VehiculoStore {
   readonly isSaving = this._isSaving.asReadonly();
 
   load(): void {
-    const filters = this._filters();
-
-    const query: VehiculoQuery = {
-      page: this._currentPage(),
-      limit: this._pageSize(),
-      sortBy: 'submarca',
-      sortOrder: 'ASC',
-    };
-
-    if (filters.submarca.trim()) {
-      query.submarca = filters.submarca.trim().toUpperCase();
-    }
-
-    if (filters.marca.trim()) {
-      query.marca = filters.marca.trim().toUpperCase();
-    }
-
-    if (filters.placa.trim()) {
-      query.placa = filters.placa.trim().toUpperCase();
-    }
-
-    if (filters.tipo !== '') {
-      query.tipo = Number(filters.tipo) as VehiculoTipo;
-    }
-
-    if (filters.clase !== '') {
-      query.clase = Number(filters.clase) as VehiculoClase;
-    }
-
-    if (filters.status !== '') {
-      query.status = filters.status === 'true';
-    }
+    const query = this.buildQuery();
 
     this._isLoading.set(true);
     this._loadError.set(null);
@@ -97,9 +76,7 @@ export class VehiculoStore {
       .getAll(query)
       .pipe(
         takeUntilDestroyed(this.destroyRef),
-        finalize(() => {
-          this._isLoading.set(false);
-        }),
+        finalize(() => this._isLoading.set(false)),
       )
       .subscribe({
         next: (response) => {
@@ -130,28 +107,8 @@ export class VehiculoStore {
   }
 
   setFilter(key: keyof VehiculoFilters, value: string): void {
-    this._filters.update((filters) => ({
-      ...filters,
-      [key]: value,
-    }));
+    this._filters.update((filters) => ({ ...filters, [key]: value }));
     this._currentPage.set(1);
-    this.load();
-  }
-
-  clearFilters(): void {
-    this._filters.set({
-      submarca: '',
-      marca: '',
-      placa: '',
-      tipo: '',
-      clase: '',
-      status: '',
-    });
-    this._currentPage.set(1);
-    this.load();
-  }
-
-  refresh(): void {
     this.load();
   }
 
@@ -162,23 +119,11 @@ export class VehiculoStore {
       .create(request)
       .pipe(
         takeUntilDestroyed(this.destroyRef),
-        finalize(() => {
-          this._isSaving.set(false);
-        }),
+        finalize(() => this._isSaving.set(false)),
       )
       .subscribe({
-        next: () => {
-          this.alertService.success(
-            'Vehículo creado correctamente',
-            'El registro se guardó correctamente.',
-          );
-          this.load();
-          onSuccess?.();
-        },
-        error: (error) => {
-          console.error('Error al crear vehículo:', error);
-          this.alertService.handleHttpError(error);
-        },
+        next: () => this.handleSaveSuccess('Vehículo guardado correctamente.', onSuccess),
+        error: (error) => this.alertService.handleHttpError(error),
       });
   }
 
@@ -189,23 +134,60 @@ export class VehiculoStore {
       .update(id, request)
       .pipe(
         takeUntilDestroyed(this.destroyRef),
-        finalize(() => {
-          this._isSaving.set(false);
-        }),
+        finalize(() => this._isSaving.set(false)),
       )
       .subscribe({
-        next: () => {
-          this.alertService.success(
-            'Vehículo actualizado correctamente',
-            'Los cambios se guardaron correctamente.',
-          );
-          this.load();
-          onSuccess?.();
+        next: () => this.handleSaveSuccess('Vehículo guardado correctamente.', onSuccess),
+        error: (error) => this.alertService.handleHttpError(error),
+      });
+  }
+
+  toggleStatus(vehiculo: Vehiculo): void {
+    const previous = vehiculo.status;
+    const next = !previous;
+
+    this.updateStatusLocal(vehiculo.id, next);
+
+    this.http
+      .patch<ApiResponse<Vehiculo>>(`${this.endpoint}/${vehiculo.id}/status`, {})
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (response) => {
+          this.updateStatusLocal(vehiculo.id, response.data.status);
         },
         error: (error) => {
-          console.error('Error al actualizar vehículo:', error);
+          this.updateStatusLocal(vehiculo.id, previous);
           this.alertService.handleHttpError(error);
         },
       });
+  }
+
+  private handleSaveSuccess(message: string, onSuccess?: () => void): void {
+    onSuccess?.();
+    this.alertService.success(message);
+    this.load();
+  }
+
+  private updateStatusLocal(id: string, status: boolean): void {
+    this._vehiculos.update((list) => list.map((v) => (v.id === id ? { ...v, status } : v)));
+  }
+
+  private buildQuery(): VehiculoQuery {
+    const filters = this._filters();
+    const query: VehiculoQuery = {
+      page: this._currentPage(),
+      limit: this._pageSize(),
+      sortBy: 'marca',
+      sortOrder: 'ASC',
+    };
+
+    if (filters.submarca.trim()) query.submarca = filters.submarca.trim().toUpperCase();
+    if (filters.marca.trim()) query.marca = filters.marca.trim().toUpperCase();
+    if (filters.placa.trim()) query.placa = filters.placa.trim().toUpperCase();
+    if (filters.tipo !== '') query.tipo = Number(filters.tipo) as VehiculoTipo;
+    if (filters.clase !== '') query.clase = Number(filters.clase) as VehiculoClase;
+    if (filters.status !== '') query.status = filters.status === 'true';
+
+    return query;
   }
 }

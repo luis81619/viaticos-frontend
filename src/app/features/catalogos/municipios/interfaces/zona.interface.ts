@@ -3,9 +3,4 @@ export interface Zona {
   nombre: string;
   zona: string;
   descripcion?: string;
-  estado?: {
-    id: string;
-    nombre: string;
-    clave: number;
-  };
 }

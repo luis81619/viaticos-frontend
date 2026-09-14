@@ -3,8 +3,7 @@ import { DestroyRef, Injectable, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { finalize } from 'rxjs';
 
-import { Trabajador } from '../interfaces/trabajador.interface';
-import { TrabajadorQuery } from '../interfaces/trabajador-query.interface';
+import { Trabajador, TrabajadorQuery } from '../interfaces/trabajador.interfaces';
 import { TrabajadorService } from '../services/trabajadores.service';
 import { AlertService } from '../../../../shared/services/alert.service';
 

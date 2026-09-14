@@ -8,10 +8,12 @@ import { environment } from '../../../../../environments/environments';
 import { BaseApiService } from '../../../../shared/services/base-api.service';
 import { ApiResponse } from '../../../../shared/interfaces/api/api-response.interface';
 
-import { Municipio } from '../interfaces/municipio.interface';
-import { MunicipioQuery } from '../interfaces/municipio-query.interface';
-import { CreateMunicipioRequest } from '../interfaces/create-municipio-request.interface';
-import { UpdateMunicipioRequest } from '../interfaces/update-municipio-request.interface';
+import {
+  CreateMunicipioRequest,
+  Municipio,
+  MunicipioQuery,
+  UpdateMunicipioRequest,
+} from '../interfaces/municipio.interfaces';
 
 @Injectable({
   providedIn: 'root',

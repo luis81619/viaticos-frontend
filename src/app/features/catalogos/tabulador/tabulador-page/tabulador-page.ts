@@ -2,6 +2,11 @@ import { ChangeDetectionStrategy, Component, OnInit, effect, inject, signal } fr
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 
+import { LucideAngularModule, SaveIcon } from 'lucide-angular';
+
+import { UiButton } from '../../../../shared/components/ui-button/ui-button';
+import { UiLoadingOverlay } from '../../../../shared/components/ui-loading-overlay/ui-loading-overlay';
+
 import { TabuladorStore } from '../store/tabulador.store';
 import {
   NivelEnTabulador,
@@ -19,7 +24,7 @@ interface TarifaEditable {
 
 @Component({
   selector: 'app-tabulador-page',
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, LucideAngularModule, UiButton, UiLoadingOverlay],
   providers: [TabuladorStore],
   templateUrl: './tabulador-page.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -27,13 +32,12 @@ interface TarifaEditable {
 export default class TabuladorPage implements OnInit {
   readonly store = inject(TabuladorStore);
 
+  readonly SaveIcon = SaveIcon;
+
   private readonly _expandidos = signal<Set<string>>(new Set());
   readonly expandidos = this._expandidos.asReadonly();
 
   private readonly _editables = signal<Record<string, TarifaEditable>>({});
-
-  monedaOptions = [{ value: 'MXN', label: 'MXN — Peso Mexicano' }];
-  moneda = signal('MXN');
 
   constructor() {
     effect(() => {

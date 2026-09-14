@@ -4,16 +4,13 @@
   (close)="onCancel()"
   [size]="'md'"
 >
-
   <form
     [formGroup]="form"
     (ngSubmit)="onSubmit()"
     autocomplete="off"
     class="flex flex-col gap-4"
   >
-
     <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
-
       <app-ui-form-select-input
         label="Tipo de vehículo"
         placeholder="Seleccione un tipo"
@@ -27,11 +24,9 @@
         [control]="form.controls.clase"
         [options]="claseOptions"
       />
-
     </div>
 
     <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
-
       <app-ui-form-text-input
         label="Marca"
         placeholder="EJ. NISSAN"
@@ -43,11 +38,9 @@
         placeholder="EJ. MAZDA 3, NP300, HILUX"
         [control]="form.controls.submarca"
       />
-
     </div>
 
     <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
-
       <app-ui-form-text-input
         label="Modelo (Año)"
         placeholder="EJ. 2020"
@@ -61,7 +54,6 @@
         placeholder="EJ. BLANCO"
         [control]="form.controls.color"
       />
-
     </div>
 
     <app-ui-form-text-input
@@ -70,36 +62,11 @@
       [control]="form.controls.placa"
     />
 
-    <app-ui-form-select-input
-      label="Estatus"
-      placeholder="Seleccione un estatus"
-      [control]="form.controls.status"
-      [options]="statusOptions"
+    <app-ui-form-footer
+      [submitLabel]="vehiculo() ? 'ACTUALIZAR' : 'GUARDAR'"
+      [loading]="isSaving()"
+      [submitDisabled]="isSaving()"
+      (cancel)="onCancel()"
     />
-
-    <div
-      class="mt-6 flex justify-end gap-2 border-t border-gray-200 pt-4"
-    >
-
-      <app-ui-button
-        variant="secondary"
-        type="button"
-        [disabled]="isSaving()"
-        (click)="onCancel()"
-      >
-        Cancelar
-      </app-ui-button>
-
-      <app-ui-button
-        type="submit"
-        [loading]="isSaving()"
-        [disabled]="isSaving()"
-      >
-        {{ vehiculo() ? 'Actualizar' : 'Guardar' }}
-      </app-ui-button>
-
-    </div>
-
   </form>
-
 </app-ui-modal>

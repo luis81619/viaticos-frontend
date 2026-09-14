@@ -4,14 +4,12 @@
   (close)="onCancel()"
   [size]="'md'"
 >
-
   <form
     [formGroup]="form"
     (ngSubmit)="onSubmit()"
     autocomplete="off"
     class="flex flex-col gap-4"
   >
-
     <app-ui-form-select-input
       label="Estado"
       placeholder="Seleccione un estado"
@@ -39,29 +37,11 @@
       [control]="form.controls.region"
     />
 
-    <div
-      class="mt-6 flex justify-end gap-2 border-t border-gray-200 pt-4"
-    >
-
-      <app-ui-button
-        variant="secondary"
-        type="button"
-        [disabled]="isSaving()"
-        (click)="onCancel()"
-      >
-        Cancelar
-      </app-ui-button>
-
-      <app-ui-button
-        type="submit"
-        [loading]="isSaving()"
-        [disabled]="isSaving()"
-      >
-        {{ municipio() ? 'Actualizar' : 'Guardar' }}
-      </app-ui-button>
-
-    </div>
-
+    <app-ui-form-footer
+      [submitLabel]="municipio() ? 'ACTUALIZAR' : 'GUARDAR'"
+      [loading]="isSaving()"
+      [submitDisabled]="isSaving()"
+      (cancel)="onCancel()"
+    />
   </form>
-
 </app-ui-modal>

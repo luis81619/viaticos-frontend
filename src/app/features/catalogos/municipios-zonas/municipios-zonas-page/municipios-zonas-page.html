@@ -186,12 +186,13 @@
                     <span>
                       Consulta las tarifas vigentes para la Zona {{ municipio.zona.zona }}
                     </span>
-                    <a
-                      routerLink="/catalogos/tabulador"
+                    <button
+                      type="button"
                       class="rounded-md border border-gray-300 bg-white px-3 py-1 text-xs font-medium text-gray-700 hover:bg-gray-100"
+                      (click)="openTarifasModal()"
                     >
                       Ver tarifas
-                    </a>
+                    </button>
                   } @else {
                     <span class="text-gray-500">Asigna una zona para ver tarifas</span>
                   }
@@ -303,4 +304,9 @@
   [isSaving]="store.isSaving()"
   (close)="closeMunicipioModal()"
   (saved)="onMunicipioSaved($event)"
+/>
+
+<app-tarifas-modal
+  [isOpen]="isTarifasModalOpen()"
+  (close)="closeTarifasModal()"
 />
