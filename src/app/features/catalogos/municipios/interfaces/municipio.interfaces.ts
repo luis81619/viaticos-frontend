@@ -16,7 +16,6 @@ export interface Municipio extends BaseRecord {
     id: string;
     nombre: string;
     zona: string;
-    descripcion?: string;
   } | null;
 }
 
@@ -41,14 +40,7 @@ export interface UpdateMunicipioRequest {
   region?: string;
 }
 
-export type MunicipioFormSubmitEvent =
-  | {
-      mode: 'create';
-      request: CreateMunicipioRequest;
-    }
-  | {
-      mode: 'update';
-      id: string;
-      request: UpdateMunicipioRequest;
-      submode: 'assign' | 'edit';
-    };
+export interface MunicipioFormSubmitEvent {
+  mode: 'create';
+  request: CreateMunicipioRequest;
+}

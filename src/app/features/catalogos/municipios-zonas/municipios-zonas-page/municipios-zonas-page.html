@@ -1,11 +1,19 @@
 <div class="space-y-4">
   <!-- ENCABEZADO -->
   <div class="flex items-center justify-between">
-    <h1 class="text-2xl font-semibold text-orange-500">Municipios y Zonas</h1>
+    <div>
+      <h1 class="text-2xl font-semibold text-orange-500">Municipios y Zonas</h1>
+      @if (store.estadoId() && store.totalPorEstado() > 0) {
+        <p class="mt-1 text-sm text-gray-500">
+          Total Municipios:
+          <span class="font-semibold text-gray-700">{{ store.totalPorEstado() }}</span>
+        </p>
+      }
+    </div>
 
     <button
       type="button"
-      title="Asignar municipio"
+      title="Agregar municipio"
       class="flex h-11 w-11 items-center justify-center rounded-lg bg-green-600 text-white shadow-sm transition hover:bg-green-700"
       (click)="openAddModal()"
     >
@@ -29,6 +37,7 @@
         </select>
 
         <input
+          appNoNumbers
           type="text"
           placeholder="Buscar municipio"
           class="rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-green-500 focus:outline-none"
@@ -162,17 +171,6 @@
                 </div>
               </div>
 
-              <!-- DESCRIPCIÓN DE LA ZONA -->
-              <div class="grid grid-cols-[180px_1fr] items-start gap-4">
-                <div class="flex items-center gap-2 pt-2 text-sm font-medium text-gray-700">
-                  <span>📝</span>
-                  <span>Descripción<br />de la zona</span>
-                </div>
-                <div class="rounded-md bg-gray-50 px-3 py-2 text-sm text-gray-800">
-                  {{ municipio.zona?.descripcion || 'Sin descripción' }}
-                </div>
-              </div>
-
               <!-- TARIFA APLICABLE -->
               <div class="grid grid-cols-[180px_1fr] items-center gap-4">
                 <div class="flex items-center gap-2 text-sm font-medium text-gray-700">
@@ -205,8 +203,8 @@
               >
                 <span class="text-base leading-none">ⓘ</span>
                 <span>
-                  La zona mostrada es la que se utilizará para el cálculo de viáticos de acuerdo
-                  con la normativa vigente.
+                  La zona mostrada es la que se utilizará para el cálculo de viáticos de acuerdo con
+                  la normativa vigente.
                 </span>
               </div>
             </div>
@@ -241,29 +239,19 @@
                   Región <span class="text-red-500">*</span>
                 </label>
                 <input
+                  appNoNumbers
                   type="text"
                   placeholder="EJ. VALLE DE TOLUCA"
                   class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm uppercase focus:border-green-500 focus:outline-none"
                   formControlName="region"
                 />
                 @if (editForm.controls.region.touched && editForm.controls.region.invalid) {
-                  <p class="mt-1 text-xs text-red-600">Este campo es requerido.</p>
+                  @if (editForm.controls.region.hasError('noNumbers')) {
+                    <p class="mt-1 text-xs text-red-600">Este campo no puede contener números.</p>
+                  } @else {
+                    <p class="mt-1 text-xs text-red-600">Este campo es requerido.</p>
+                  }
                 }
-              </div>
-
-              <div>
-                <label class="mb-1 block text-sm font-medium text-gray-700">
-                  Descripción de la zona
-                </label>
-                <textarea
-                  rows="3"
-                  placeholder="Ej. Purépecha, excepto Municipio de Uruapan"
-                  class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-green-500 focus:outline-none"
-                  formControlName="descripcionZona"
-                ></textarea>
-                <p class="mt-1 text-xs text-gray-500">
-                  Se aplicará a la zona seleccionada (afecta a todos los municipios de esa zona).
-                </p>
               </div>
 
               <div class="flex justify-end gap-2 border-t border-gray-100 pt-4">
@@ -300,13 +288,9 @@
 
 <app-municipio-form-modal
   [isOpen]="isMunicipioModalOpen()"
-  [municipio]="selectedMunicipioForModal()"
   [isSaving]="store.isSaving()"
   (close)="closeMunicipioModal()"
   (saved)="onMunicipioSaved($event)"
 />
 
-<app-tarifas-modal
-  [isOpen]="isTarifasModalOpen()"
-  (close)="closeTarifasModal()"
-/>
+<app-tarifas-modal [isOpen]="isTarifasModalOpen()" (close)="closeTarifasModal()" />

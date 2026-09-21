@@ -12,7 +12,6 @@ export interface Trabajador {
 
   numeroCuentaNomina: string | null;
   numeroSeguridadSocial: string | null;
-  numeroInfonavit: string | null;
   numeroTrabajador: number | null;
 
   rfc: string | null;
@@ -22,16 +21,15 @@ export interface Trabajador {
   otroTelefono: string | null;
 
   bancoId: string | null;
-  fotoId: string | null;
-  firmaId: string | null;
-  plantelId: string | null;
 
   createdAt: string | Date;
   updatedAt: string | Date;
 }
 
 export interface TrabajadorQuery extends BaseQuery {
-  search?: string;
+  nombre?: string;
+  rfc?: string;
+  numeroTrabajador?: string;
 }
 
 export interface SyncTrabajadoresResponse {

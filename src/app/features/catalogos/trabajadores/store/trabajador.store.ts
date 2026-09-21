@@ -7,6 +7,14 @@ import { Trabajador, TrabajadorQuery } from '../interfaces/trabajador.interfaces
 import { TrabajadorService } from '../services/trabajadores.service';
 import { AlertService } from '../../../../shared/services/alert.service';
 
+type FilterKey = 'nombre' | 'rfc' | 'numeroTrabajador';
+
+interface TrabajadorFilters {
+  nombre: string;
+  rfc: string;
+  numeroTrabajador: string;
+}
+
 @Injectable()
 export class TrabajadorStore {
   private readonly alertService = inject(AlertService);
@@ -14,7 +22,11 @@ export class TrabajadorStore {
   private readonly destroyRef = inject(DestroyRef);
 
   private readonly _trabajadores = signal<Trabajador[]>([]);
-  private readonly _search = signal<string>('');
+  private readonly _filters = signal<TrabajadorFilters>({
+    nombre: '',
+    rfc: '',
+    numeroTrabajador: '',
+  });
   private readonly _currentPage = signal(1);
   private readonly _pageSize = signal(25);
   private readonly _totalRecords = signal(0);
@@ -26,7 +38,7 @@ export class TrabajadorStore {
   private searchDebounceHandle: any = null;
 
   readonly trabajadores = this._trabajadores.asReadonly();
-  readonly search = this._search.asReadonly();
+  readonly filters = this._filters.asReadonly();
   readonly currentPage = this._currentPage.asReadonly();
   readonly pageSize = this._pageSize.asReadonly();
   readonly totalRecords = this._totalRecords.asReadonly();
@@ -35,8 +47,9 @@ export class TrabajadorStore {
   readonly loadError = this._loadError.asReadonly();
   readonly isSyncing = this._isSyncing.asReadonly();
 
-  setSearch(term: string): void {
-    this._search.set(term);
+  setFilter(key: FilterKey, value: string): void {
+    this._filters.update((f) => ({ ...f, [key]: value }));
+
     if (this.searchDebounceHandle) clearTimeout(this.searchDebounceHandle);
     this.searchDebounceHandle = setTimeout(() => {
       this._currentPage.set(1);
@@ -57,6 +70,8 @@ export class TrabajadorStore {
   }
 
   load(): void {
+    const filters = this._filters();
+
     const query: TrabajadorQuery = {
       page: this._currentPage(),
       limit: this._pageSize(),
@@ -64,8 +79,11 @@ export class TrabajadorStore {
       sortOrder: 'ASC',
     } as any;
 
-    const term = this._search().trim();
-    if (term) (query as any).search = term;
+    if (filters.nombre.trim()) (query as any).nombre = filters.nombre.trim();
+    if (filters.rfc.trim()) (query as any).rfc = filters.rfc.trim();
+    if (filters.numeroTrabajador.trim()) {
+      (query as any).numeroTrabajador = filters.numeroTrabajador.trim();
+    }
 
     this._isLoading.set(true);
     this._loadError.set(null);

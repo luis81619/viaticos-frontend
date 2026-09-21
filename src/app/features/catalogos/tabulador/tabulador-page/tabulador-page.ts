@@ -1,13 +1,29 @@
-import { ChangeDetectionStrategy, Component, OnInit, effect, inject, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  OnInit,
+  computed,
+  effect,
+  inject,
+  signal,
+} from '@angular/core';
+
 import { CommonModule } from '@angular/common';
+
 import { FormsModule } from '@angular/forms';
 
 import { LucideAngularModule, SaveIcon } from 'lucide-angular';
 
 import { UiButton } from '../../../../shared/components/ui-button/ui-button';
+
 import { UiLoadingOverlay } from '../../../../shared/components/ui-loading-overlay/ui-loading-overlay';
 
+import { DecimalOnlyDirective } from '../../../../shared/directives/decimal-only.directive';
+
+import { AlertService } from '../../../../shared/services/alert.service';
+
 import { TabuladorStore } from '../store/tabulador.store';
+
 import {
   NivelEnTabulador,
   TarifaEnTabulador,
@@ -24,29 +40,94 @@ interface TarifaEditable {
 
 @Component({
   selector: 'app-tabulador-page',
-  imports: [CommonModule, FormsModule, LucideAngularModule, UiButton, UiLoadingOverlay],
+
+  imports: [
+    CommonModule,
+    FormsModule,
+    LucideAngularModule,
+    UiButton,
+    UiLoadingOverlay,
+    DecimalOnlyDirective,
+  ],
+
   providers: [TabuladorStore],
+
   templateUrl: './tabulador-page.html',
+
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export default class TabuladorPage implements OnInit {
   readonly store = inject(TabuladorStore);
 
+  private readonly alertService = inject(AlertService);
+
   readonly SaveIcon = SaveIcon;
 
   private readonly _expandidos = signal<Set<string>>(new Set());
+
   readonly expandidos = this._expandidos.asReadonly();
 
+  // Buffer editable en pantalla (lo que el usuario está capturando).
   private readonly _editables = signal<Record<string, TarifaEditable>>({});
+
+  // Snapshot original (lo que vino del backend) para comparar cambios.
+  private readonly _original = signal<Record<string, TarifaEditable>>({});
+
+  // True si algún campo cambió respecto al snapshot original.
+  readonly tieneCambios = computed(() => {
+    const buffer = this._editables();
+    const original = this._original();
+
+    for (const key of Object.keys(buffer)) {
+      const actual = buffer[key];
+      const orig = original[key];
+      if (!orig) return true;
+
+      if (
+        actual.tarifaHospedaje !== orig.tarifaHospedaje ||
+        actual.tarifaAlimentos !== orig.tarifaAlimentos ||
+        (actual.tarifaPeaje ?? null) !== (orig.tarifaPeaje ?? null)
+      ) {
+        return true;
+      }
+    }
+    return false;
+  });
+
+  // Lista ordenada de zonas únicas modificadas — para el mensaje de confirmación.
+  readonly zonasModificadas = computed<string[]>(() => {
+    const buffer = this._editables();
+    const original = this._original();
+    const zonas = new Set<string>();
+
+    for (const key of Object.keys(buffer)) {
+      const actual = buffer[key];
+      const orig = original[key];
+      if (!orig) continue;
+
+      if (
+        actual.tarifaHospedaje !== orig.tarifaHospedaje ||
+        actual.tarifaAlimentos !== orig.tarifaAlimentos ||
+        (actual.tarifaPeaje ?? null) !== (orig.tarifaPeaje ?? null)
+      ) {
+        zonas.add(actual.zona);
+      }
+    }
+
+    const orden = ['I', 'II', 'III', 'IV'];
+    return orden.filter((z) => zonas.has(z));
+  });
 
   constructor() {
     effect(() => {
       const niveles = this.store.niveles();
+
       const bufferNuevo: Record<string, TarifaEditable> = {};
 
       for (const grupo of niveles) {
         for (const tarifa of grupo.tarifas) {
           const key = this.claveEditable(grupo.nivel.id, tarifa.zona);
+
           bufferNuevo[key] = {
             nivelAplicacionId: grupo.nivel.id,
             zona: tarifa.zona,
@@ -58,6 +139,7 @@ export default class TabuladorPage implements OnInit {
       }
 
       this._editables.set(bufferNuevo);
+      this._original.set(this.clonarBuffer(bufferNuevo));
     });
   }
 
@@ -69,11 +151,26 @@ export default class TabuladorPage implements OnInit {
     return `${nivelId}|${zona}`;
   }
 
+  private clonarBuffer(
+    buffer: Record<string, TarifaEditable>,
+  ): Record<string, TarifaEditable> {
+    const copia: Record<string, TarifaEditable> = {};
+    for (const key of Object.keys(buffer)) {
+      copia[key] = { ...buffer[key] };
+    }
+    return copia;
+  }
+
   toggle(nivelId: string): void {
     this._expandidos.update((set) => {
       const nuevo = new Set(set);
-      if (nuevo.has(nivelId)) nuevo.delete(nivelId);
-      else nuevo.add(nivelId);
+
+      if (nuevo.has(nivelId)) {
+        nuevo.delete(nivelId);
+      } else {
+        nuevo.add(nivelId);
+      }
+
       return nuevo;
     });
   }
@@ -104,6 +201,7 @@ export default class TabuladorPage implements OnInit {
 
   setPeaje(nivelId: string, zona: string, value: number | string): void {
     const parsed = value === '' || value == null ? null : Number(value);
+
     this.actualizarCampo(nivelId, zona, 'tarifaPeaje', parsed);
   }
 
@@ -115,19 +213,30 @@ export default class TabuladorPage implements OnInit {
   ): void {
     this._editables.update((buffer) => {
       const key = this.claveEditable(nivelId, zona);
+
       const actual = buffer[key];
-      if (!actual) return buffer;
+
+      if (!actual) {
+        return buffer;
+      }
+
       return {
         ...buffer,
-        [key]: { ...actual, [campo]: value },
+
+        [key]: {
+          ...actual,
+          [campo]: value,
+        },
       };
     });
   }
 
   columnasZonas(nivel: NivelEnTabulador): TarifaEnTabulador[] {
     const zonasFijas = ['I', 'II', 'III', 'IV'];
+
     return zonasFijas.map((num) => {
       const existente = nivel.tarifas.find((t) => t.zona === num);
+
       return (
         existente ?? {
           id: '',
@@ -142,7 +251,23 @@ export default class TabuladorPage implements OnInit {
     });
   }
 
-  actualizarTabulador(): void {
+  async actualizarTabulador(): Promise<void> {
+    if (!this.tieneCambios()) return;
+
+    const zonas = this.zonasModificadas();
+    const listado =
+      zonas.length === 1
+        ? `la Zona ${zonas[0]}`
+        : `las Zonas ${zonas.join(', ')}`;
+
+    const confirmResult = await this.alertService.confirm(
+      '¿Guardar cambios del tabulador?',
+      `Se actualizarán las tarifas de ${listado}. ¿Deseas continuar?`,
+      'Guardar cambios',
+    );
+
+    if (!confirmResult.isConfirmed) return;
+
     const items: TarifaUpdateItem[] = Object.values(this._editables()).map((t) => ({
       nivelAplicacionId: t.nivelAplicacionId,
       zona: t.zona,
@@ -151,21 +276,27 @@ export default class TabuladorPage implements OnInit {
       tarifaPeaje: t.tarifaPeaje ?? undefined,
     }));
 
-    this.store.actualizar({ tarifas: items });
+    this.store.actualizar({
+      tarifas: items,
+    });
   }
 
   colorZona(zona: string): string {
     switch (zona) {
       case 'I':
-        return 'text-green-600 border-green-400';
+        return 'border-gray-200 border-l-4 border-l-green-500';
+
       case 'II':
-        return 'text-blue-600 border-blue-400';
+        return 'border-gray-200 border-l-4 border-l-blue-500';
+
       case 'III':
-        return 'text-orange-500 border-orange-400';
+        return 'border-gray-200 border-l-4 border-l-orange-500';
+
       case 'IV':
-        return 'text-red-500 border-red-400';
+        return 'border-gray-200 border-l-4 border-l-red-500';
+
       default:
-        return 'text-gray-600 border-gray-400';
+        return 'border-gray-200 border-l-4 border-l-gray-400';
     }
   }
 }

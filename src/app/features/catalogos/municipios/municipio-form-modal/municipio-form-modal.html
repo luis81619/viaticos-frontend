@@ -1,15 +1,10 @@
 <app-ui-modal
   [isOpen]="isOpen()"
-  [title]="municipio() ? 'Editar Municipio' : 'Asignar Municipio'"
+  title="Agregar Municipio"
   (close)="onCancel()"
   [size]="'md'"
 >
-  <form
-    [formGroup]="form"
-    (ngSubmit)="onSubmit()"
-    autocomplete="off"
-    class="flex flex-col gap-4"
-  >
+  <form [formGroup]="form" (ngSubmit)="onSubmit()" autocomplete="off" class="flex flex-col gap-4">
     <app-ui-form-select-input
       label="Estado"
       placeholder="Seleccione un estado"
@@ -17,11 +12,11 @@
       [options]="estadoOptions()"
     />
 
-    <app-ui-form-select-input
+    <app-ui-form-text-input
       label="Municipio"
-      placeholder="Seleccione un municipio"
-      [control]="form.controls.municipioId"
-      [options]="municipioOptions()"
+      placeholder="EJ. TOLUCA"
+      [control]="form.controls.municipioNombre"
+      [noNumbers]="true"
     />
 
     <app-ui-form-select-input
@@ -35,10 +30,11 @@
       label="Región"
       placeholder="EJ. VALLE DE TOLUCA"
       [control]="form.controls.region"
+      [noNumbers]="true"
     />
 
     <app-ui-form-footer
-      [submitLabel]="municipio() ? 'ACTUALIZAR' : 'GUARDAR'"
+      submitLabel="GUARDAR"
       [loading]="isSaving()"
       [submitDisabled]="isSaving()"
       (cancel)="onCancel()"

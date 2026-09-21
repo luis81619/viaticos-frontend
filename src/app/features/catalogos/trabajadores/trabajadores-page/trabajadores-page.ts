@@ -65,6 +65,10 @@ export default class TrabajadoresPage implements OnInit, AfterViewInit {
       {
         key: 'numeroTrabajador',
         title: 'N° Trabajador',
+        filter: {
+          type: 'text',
+          placeholder: 'Buscar N°...',
+        },
       },
       {
         key: 'nombre',
@@ -72,31 +76,23 @@ export default class TrabajadoresPage implements OnInit, AfterViewInit {
         template: this.nombreCompletoTemplate,
         filter: {
           type: 'text',
-          placeholder: 'Buscar por nombre, RFC, N° trabajador...',
+          placeholder: 'Buscar por nombre...',
         },
       },
       {
         key: 'rfc',
         title: 'RFC',
-      },
-      {
-        key: 'emailInstitucional',
-        title: 'Email institucional',
-      },
-      {
-        key: 'numeroCuentaNomina',
-        title: 'Cuenta nómina',
-      },
-      {
-        key: 'celular',
-        title: 'Celular',
+        filter: {
+          type: 'text',
+          placeholder: 'Buscar RFC...',
+        },
       },
     ]);
   }
 
   onFilterChange(event: TableFilterEvent): void {
-    if (event.key === 'nombre') {
-      this.store.setSearch(String(event.value));
+    if (event.key === 'nombre' || event.key === 'rfc' || event.key === 'numeroTrabajador') {
+      this.store.setFilter(event.key, String(event.value ?? ''));
     }
   }
 

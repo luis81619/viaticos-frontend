@@ -17,6 +17,9 @@ import { EstadoService } from '../../municipios/services/estados.service';
 import { ZonaService } from '../../municipios/services/zonas.service';
 import { MunicipioFormModal } from '../../municipios/municipio-form-modal/municipio-form-modal';
 import { TarifasModal } from '../tarifas-modal/tarifas-modal';
+import { AlertService } from '../../../../shared/services/alert.service';
+import { noNumbers } from '../../../../shared/validators/no-numbers.validator';
+import { NoNumbersDirective } from '../../../../shared/directives/no-numbers.directive';
 
 interface EstadoOption {
   label: string;
@@ -38,6 +41,7 @@ type TabPanel = 'detalles' | 'editar';
     ReactiveFormsModule,
     MunicipioFormModal,
     TarifasModal,
+    NoNumbersDirective,
   ],
   providers: [MunicipiosZonasStore],
   templateUrl: './municipios-zonas-page.html',
@@ -47,6 +51,7 @@ export default class MunicipiosZonasPage implements OnInit {
   readonly store = inject(MunicipiosZonasStore);
   private readonly estadoService = inject(EstadoService);
   private readonly zonaService = inject(ZonaService);
+  private readonly alertService = inject(AlertService);
   private readonly fb = inject(FormBuilder);
   private readonly destroyRef = inject(DestroyRef);
 
@@ -54,7 +59,6 @@ export default class MunicipiosZonasPage implements OnInit {
   zonaOptions = signal<ZonaOption[]>([]);
 
   isMunicipioModalOpen = signal(false);
-  selectedMunicipioForModal = signal<Municipio | null>(null);
 
   isTarifasModalOpen = signal(false);
 
@@ -62,8 +66,11 @@ export default class MunicipiosZonasPage implements OnInit {
 
   editForm = this.fb.nonNullable.group({
     zonaId: this.fb.nonNullable.control('', [Validators.required]),
-    region: this.fb.nonNullable.control('', [Validators.required, Validators.maxLength(150)]),
-    descripcionZona: this.fb.nonNullable.control('', [Validators.maxLength(500)]),
+    region: this.fb.nonNullable.control('', [
+      Validators.required,
+      Validators.maxLength(150),
+      noNumbers,
+    ]),
   });
 
   constructor() {
@@ -74,12 +81,11 @@ export default class MunicipiosZonasPage implements OnInit {
         this.editForm.reset({
           zonaId: municipio.zona?.id ?? '',
           region: municipio.region ?? '',
-          descripcionZona: municipio.zona?.descripcion ?? '',
         });
         this.loadZonasGlobales();
       } else {
         this.activeTab.set('detalles');
-        this.editForm.reset({ zonaId: '', region: '', descripcionZona: '' });
+        this.editForm.reset({ zonaId: '', region: '' });
         this.zonaOptions.set([]);
       }
     });
@@ -160,13 +166,11 @@ export default class MunicipiosZonasPage implements OnInit {
   }
 
   openAddModal(): void {
-    this.selectedMunicipioForModal.set(null);
     this.isMunicipioModalOpen.set(true);
   }
 
   closeMunicipioModal(): void {
     this.isMunicipioModalOpen.set(false);
-    this.selectedMunicipioForModal.set(null);
   }
 
   openTarifasModal(): void {
@@ -178,16 +182,11 @@ export default class MunicipiosZonasPage implements OnInit {
   }
 
   onMunicipioSaved(event: MunicipioFormSubmitEvent): void {
-    if (event.mode !== 'update') return;
-
-    if (event.submode === 'assign') {
-      this.store.assign(event.id, event.request, () => this.closeMunicipioModal());
-      return;
-    }
-    this.store.update(event.id, event.request, () => this.closeMunicipioModal());
+    if (event.mode !== 'create') return;
+    this.store.create(event.request, () => this.closeMunicipioModal());
   }
 
-  saveEdit(): void {
+  async saveEdit(): Promise<void> {
     const municipio = this.store.selected();
     if (!municipio) return;
 
@@ -196,6 +195,14 @@ export default class MunicipiosZonasPage implements OnInit {
       return;
     }
 
+    const confirmResult = await this.alertService.confirm(
+      '¿Guardar cambios?',
+      `La información del municipio "${municipio.nombre}" se modificará. ¿Deseas continuar?`,
+      'Guardar cambios',
+    );
+
+    if (!confirmResult.isConfirmed) return;
+
     const value = this.editForm.getRawValue();
 
     this.store.batchUpdateOne(
@@ -203,7 +210,6 @@ export default class MunicipiosZonasPage implements OnInit {
       {
         zonaId: value.zonaId,
         region: value.region.trim().toUpperCase(),
-        descripcionZona: value.descripcionZona.trim(),
       },
       () => this.activeTab.set('detalles'),
     );
@@ -215,7 +221,6 @@ export default class MunicipiosZonasPage implements OnInit {
       this.editForm.reset({
         zonaId: municipio.zona?.id ?? '',
         region: municipio.region ?? '',
-        descripcionZona: municipio.zona?.descripcion ?? '',
       });
     }
     this.activeTab.set('detalles');

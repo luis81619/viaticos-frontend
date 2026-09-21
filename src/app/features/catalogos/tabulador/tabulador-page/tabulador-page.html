@@ -1,12 +1,16 @@
 <section class="space-y-6">
   <header>
-    <h1 class="text-2xl font-semibold text-orange-500">
-      Tabulador de Viáticos
-    </h1>
+    <h1 class="text-2xl font-semibold text-orange-500">Tabulador de Viáticos</h1>
 
     <p class="mt-1 text-sm text-gray-600">
       Captura las tarifas de hospedaje, alimentos y peaje por nivel y zona.
     </p>
+
+    @if (tieneCambios()) {
+      <p class="mt-2 text-sm font-bold text-orange-600">
+        Tiene datos editados sin guardar.
+      </p>
+    }
   </header>
 
   <!-- LOADING -->
@@ -40,6 +44,7 @@
               >
                 👤
               </span>
+
               <span class="text-lg font-semibold text-gray-800">
                 {{ grupo.nivel.nombre }}
               </span>
@@ -54,73 +59,197 @@
             </span>
           </button>
 
-          <!-- CONTENIDO  -->
+          <!-- CONTENIDO -->
           @if (isExpandido(grupo.nivel.id)) {
             <div class="border-t border-gray-100 p-4">
               <div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
+                <!-- ================================================= -->
+                <!-- CARDS DE ZONAS -->
+                <!-- ================================================= -->
+
                 @for (tarifa of columnasZonas(grupo); track tarifa.zona) {
-                  <div class="rounded-md border p-3" [class]="colorZona(tarifa.zona)">
-                    <!-- CABECERA DE LA COLUMNA -->
-                    <div class="flex items-center gap-2 pb-3">
-                      <span>📍</span>
-                      <span class="font-semibold">ZONA {{ tarifa.zona }}</span>
-                    </div>
+                  <!-- CARD -->
+                  <div
+                    class="overflow-hidden rounded-lg border bg-white shadow-sm"
+                    [class]="colorZona(tarifa.zona)"
+                  >
+                    <!-- ENCABEZADO DE LA ZONA -->
+                    <div class="px-3 pt-3">
+                      <div
+                        class="flex items-center gap-3 rounded-md px-4 py-3"
+                        [ngClass]="{
+                          'bg-green-50': tarifa.zona === 'I',
+                          'bg-blue-50': tarifa.zona === 'II',
+                          'bg-orange-50': tarifa.zona === 'III',
+                          'bg-red-50': tarifa.zona === 'IV',
+                        }"
+                      >
+                        <!-- ICONO UBICACIÓN -->
+                        <span
+                          class="flex h-7 w-7 items-center justify-center"
+                          [ngClass]="{
+                            'text-green-500': tarifa.zona === 'I',
+                            'text-blue-500': tarifa.zona === 'II',
+                            'text-orange-500': tarifa.zona === 'III',
+                            'text-red-500': tarifa.zona === 'IV',
+                          }"
+                        >
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            viewBox="0 0 24 24"
+                            fill="currentColor"
+                            class="h-6 w-6"
+                          >
+                            <path
+                              fill-rule="evenodd"
+                              d="M11.54 22.351a.75.75 0 0 0 .92 0c.146-.11 3.54-2.71 5.79-6.017C19.54 14.27 20.25 12.28 20.25 10.5a8.25 8.25 0 1 0-16.5 0c0 1.78.71 3.77 2 5.834 2.25 3.307 5.644 5.907 5.79 6.017ZM12 12.75a2.25 2.25 0 1 0 0-4.5 2.25 2.25 0 0 0 0 4.5Z"
+                              clip-rule="evenodd"
+                            />
+                          </svg>
+                        </span>
 
-                    <!-- CAMPO HOSPEDAJE -->
-                    <div class="mb-3">
-                      <label class="mb-1 flex items-center gap-2 text-sm text-gray-700">
-                        <span>🛏️</span> Hospedaje
-                      </label>
-                      <div class="flex items-center gap-1">
-                        <span class="text-xs text-gray-500">$</span>
-                        <input
-                          type="number"
-                          min="0"
-                          step="0.01"
-                          class="w-full rounded-md border border-gray-300 px-2 py-1 text-right text-sm"
-                          [ngModel]="hospedaje(grupo.nivel.id, tarifa.zona)"
-                          (ngModelChange)="setHospedaje(grupo.nivel.id, tarifa.zona, $event)"
-                        />
+                        <!-- NOMBRE DE ZONA -->
+                        <span
+                          class="text-lg font-bold"
+                          [ngClass]="{
+                            'text-green-500': tarifa.zona === 'I',
+                            'text-blue-500': tarifa.zona === 'II',
+                            'text-orange-500': tarifa.zona === 'III',
+                            'text-red-500': tarifa.zona === 'IV',
+                          }"
+                        >
+                          ZONA {{ tarifa.zona }}
+                        </span>
                       </div>
                     </div>
 
-                    <!-- CAMPO ALIMENTACIÓN -->
-                    <div class="mb-3">
-                      <label class="mb-1 flex items-center gap-2 text-sm text-gray-700">
-                        <span>🍽️</span> Alimentación
-                      </label>
-                      <div class="flex items-center gap-1">
-                        <span class="text-xs text-gray-500">$</span>
-                        <input
-                          type="number"
-                          min="0"
-                          step="0.01"
-                          class="w-full rounded-md border border-gray-300 px-2 py-1 text-right text-sm"
-                          [ngModel]="alimentos(grupo.nivel.id, tarifa.zona)"
-                          (ngModelChange)="setAlimentos(grupo.nivel.id, tarifa.zona, $event)"
-                        />
-                      </div>
-                    </div>
+                    <!-- CONTENIDO DE LA CARD -->
+                    <div class="px-4 pb-2 pt-1">
+                      <!-- HOSPEDAJE -->
+                      <div class="flex items-center gap-3 border-b border-gray-100 py-4">
+                        <!-- ICONO CAMA -->
+                        <div class="flex w-8 shrink-0 items-center justify-center text-gray-500">
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            viewBox="0 0 24 24"
+                            fill="currentColor"
+                            class="h-6 w-6"
+                          >
+                            <path
+                              d="M6 5.25A2.25 2.25 0 0 0 3.75 7.5v9.75H3a.75.75 0 0 0 0 1.5h18a.75.75 0 0 0 0-1.5h-.75V12A2.25 2.25 0 0 0 18 9.75H8.25V7.5A2.25 2.25 0 0 0 6 5.25Zm0 1.5a.75.75 0 0 1 .75.75v2.25H5.25V7.5A.75.75 0 0 1 6 6.75ZM5.25 11.25H18a.75.75 0 0 1 .75.75v1.5H5.25v-2.25Z"
+                            />
+                          </svg>
+                        </div>
 
-                    <!-- CAMPO PEAJE -->
-                    <div>
-                      <label class="mb-1 flex items-center gap-2 text-sm text-gray-700">
-                        <span>🚗</span> Peaje
-                      </label>
-                      <div class="flex items-center gap-1">
-                        <span class="text-xs text-gray-500">$</span>
-                        <input
-                          type="number"
-                          min="0"
-                          step="0.01"
-                          placeholder="Opcional"
-                          class="w-full rounded-md border border-gray-300 px-2 py-1 text-right text-sm"
-                          [ngModel]="peaje(grupo.nivel.id, tarifa.zona)"
-                          (ngModelChange)="setPeaje(grupo.nivel.id, tarifa.zona, $event)"
-                        />
+                        <!-- TEXTO -->
+                        <div class="min-w-0 flex-1">
+                          <span class="text-sm font-medium text-gray-600"> Hospedaje </span>
+                        </div>
+
+                        <!-- MONEDA + INPUT -->
+                        <div class="flex shrink-0 items-center">
+                          <span
+                            class="flex h-10 items-center rounded-l-lg bg-gray-50 px-3 text-xs font-medium text-gray-400"
+                          >
+                            MXN
+                          </span>
+
+                          <input
+                            appDecimalOnly
+                            type="text"
+                            inputmode="decimal"
+                            class="h-10 w-20 rounded-r-lg border border-l-0 border-gray-200 bg-white px-3 text-right text-sm text-gray-700 outline-none transition focus:border-orange-400 focus:ring-1 focus:ring-orange-100"
+                            [ngModel]="hospedaje(grupo.nivel.id, tarifa.zona)"
+                            (ngModelChange)="setHospedaje(grupo.nivel.id, tarifa.zona, $event)"
+                          />
+                        </div>
+                      </div>
+
+                      <!-- ALIMENTACIÓN -->
+                      <div class="flex items-center gap-3 border-b border-gray-100 py-4">
+                        <!-- ICONO COMIDA -->
+                        <div class="flex w-8 shrink-0 items-center justify-center text-gray-500">
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            viewBox="0 0 24 24"
+                            fill="currentColor"
+                            class="h-6 w-6"
+                          >
+                            <path
+                              d="M7.5 2.25a.75.75 0 0 1 .75.75v6.44c0 .42.34.76.76.76s.76-.34.76-.76V3a.75.75 0 0 1 1.5 0v6.44a2.26 2.26 0 0 1-2.26 2.26v9.05a.75.75 0 0 1-1.5 0V11.7a2.26 2.26 0 0 1-2.26-2.26V3a.75.75 0 0 1 .75-.75Zm8.75 0a.75.75 0 0 1 .75.75v5.25h1.5V3a.75.75 0 0 1 1.5 0v18a.75.75 0 0 1-1.5 0v-11.25h-2.25V21a.75.75 0 0 1-1.5 0V3a.75.75 0 0 1 .75-.75h.75Z"
+                            />
+                          </svg>
+                        </div>
+
+                        <!-- TEXTO -->
+                        <div class="min-w-0 flex-1">
+                          <span class="text-sm font-medium text-gray-600"> Alimentación </span>
+                        </div>
+
+                        <!-- MONEDA + INPUT -->
+                        <div class="flex shrink-0 items-center">
+                          <span
+                            class="flex h-10 items-center rounded-l-lg bg-gray-50 px-3 text-xs font-medium text-gray-400"
+                          >
+                            MXN
+                          </span>
+
+                          <input
+                            appDecimalOnly
+                            type="text"
+                            inputmode="decimal"
+                            class="h-10 w-20 rounded-r-lg border border-l-0 border-gray-200 bg-white px-3 text-right text-sm text-gray-700 outline-none transition focus:border-orange-400 focus:ring-1 focus:ring-orange-100"
+                            [ngModel]="alimentos(grupo.nivel.id, tarifa.zona)"
+                            (ngModelChange)="setAlimentos(grupo.nivel.id, tarifa.zona, $event)"
+                          />
+                        </div>
+                      </div>
+
+                      <!-- PEAJE -->
+                      <div class="flex items-center gap-3 py-4">
+                        <!-- ICONO AUTO -->
+                        <div class="flex w-8 shrink-0 items-center justify-center text-gray-500">
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            viewBox="0 0 24 24"
+                            fill="currentColor"
+                            class="h-6 w-6"
+                          >
+                            <path
+                              fill-rule="evenodd"
+                              d="M4.5 6.75A2.25 2.25 0 0 1 6.75 4.5h10.5a2.25 2.25 0 0 1 2.25 2.25v1.06l.82 1.64a2.25 2.25 0 0 1 .24 1.006v5.29a2.25 2.25 0 0 1-2.25 2.25h-.56a2.25 2.25 0 0 1-4.44 0H9.69a2.25 2.25 0 0 1-4.44 0h-.56a2.25 2.25 0 0 1-2.25-2.25v-5.29c0-.35.082-.695.24-1.006l.82-1.64V6.75Zm2.25-.75a.75.75 0 0 0-.75.75v.75h12v-.75a.75.75 0 0 0-.75-.75H6.75ZM5.25 9.75l-.75 1.5v2.25h15v-2.25l-.75-1.5h-13.5ZM6 15a.75.75 0 1 0 0 1.5A.75.75 0 0 0 6 15Zm12 0a.75.75 0 1 0 0 1.5A.75.75 0 0 0 18 15Z"
+                              clip-rule="evenodd"
+                            />
+                          </svg>
+                        </div>
+
+                        <!-- TEXTO -->
+                        <div class="min-w-0 flex-1">
+                          <span class="text-sm font-medium text-gray-600"> Peaje </span>
+                        </div>
+
+                        <!-- MONEDA + INPUT -->
+                        <div class="flex shrink-0 items-center">
+                          <span
+                            class="flex h-10 items-center rounded-l-lg bg-gray-50 px-3 text-xs font-medium text-gray-400"
+                          >
+                            MXN
+                          </span>
+
+                          <input
+                            appDecimalOnly
+                            type="text"
+                            inputmode="decimal"
+                            placeholder="0.00"
+                            class="h-10 w-20 rounded-r-lg border border-l-0 border-gray-200 bg-white px-3 text-right text-sm text-gray-700 outline-none transition focus:border-orange-400 focus:ring-1 focus:ring-orange-100"
+                            [ngModel]="peaje(grupo.nivel.id, tarifa.zona)"
+                            (ngModelChange)="setPeaje(grupo.nivel.id, tarifa.zona, $event)"
+                          />
+                        </div>
                       </div>
                     </div>
                   </div>
+                  <!-- FIN CARD -->
                 }
               </div>
             </div>
@@ -139,13 +268,10 @@
         <div class="group relative">
           <app-ui-button
             variant="primary"
-            [disabled]="store.isSaving() || store.isLoading()"
+            [disabled]="store.isSaving() || store.isLoading() || !tieneCambios()"
             (click)="actualizarTabulador()"
           >
-            <lucide-icon
-              [img]="SaveIcon"
-              class="h-5 w-5"
-            />
+            <lucide-icon [img]="SaveIcon" class="h-5 w-5" />
 
             Guardar cambios
           </app-ui-button>
@@ -160,8 +286,5 @@
     }
   }
 
-  <app-ui-loading-overlay
-    [visible]="store.isSaving()"
-    message="Guardando tabulador..."
-  />
+  <app-ui-loading-overlay [visible]="store.isSaving()" message="Guardando tabulador..." />
 </section>
