@@ -1,0 +1,56 @@
+<div class="space-y-6">
+  <!-- BÚSQUEDA DEL TRABAJADOR -->
+  <div class="max-w-md rounded-lg border border-gray-200 p-4">
+    <div class="flex items-start gap-2" (keydown.enter)="buscar()">
+      <div class="flex-1">
+        <app-ui-form-text-input
+          [label]="store.puedeElegirTrabajador() ? 'Buscar por número de trabajador' : 'No. de Trabajador'"
+          [control]="numeroBusqueda"
+        />
+      </div>
+
+      <app-ui-button
+        variant="primary"
+        size="lg"
+        [iconOnly]="true"
+        [disabled]="!store.puedeElegirTrabajador() || store.buscandoTrabajador()"
+        (click)="buscar()"
+      >
+        <lucide-icon [img]="SearchIcon" class="h-5 w-5" />
+      </app-ui-button>
+    </div>
+  </div>
+
+  <!-- DATOS GENERALES -->
+  <div class="rounded-lg border border-gray-200 p-4">
+    <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+      <app-ui-form-text-input label="Nombre" [control]="form.controls.nombre" />
+
+      <app-ui-form-text-input label="Puesto" [control]="form.controls.puesto" />
+
+      <app-ui-form-text-input label="Banco" [control]="form.controls.banco" />
+
+      <app-ui-form-text-input label="No. CTA. Nómina" [control]="form.controls.cuentaNomina" />
+
+      <app-ui-form-select-input
+        label="Dirección"
+        placeholder="Seleccione una dirección"
+        [control]="form.controls.direccionId"
+        [options]="direccionOptions()"
+      />
+
+      <div class="md:row-span-2">
+        <app-ui-form-textarea-input label="Objetivo" [control]="form.controls.objetivo" />
+      </div>
+
+      <app-ui-form-select-input
+        label="Actividad"
+        [placeholder]="form.controls.direccionId.value ? 'Seleccione una actividad' : 'Primero seleccione una dirección'"
+        [control]="form.controls.actividadId"
+        [options]="actividadOptions()"
+      />
+    </div>
+  </div>
+
+  <app-ui-loading-overlay [visible]="store.buscandoTrabajador()" message="Buscando trabajador..." />
+</div>

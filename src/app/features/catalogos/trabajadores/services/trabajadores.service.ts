@@ -10,6 +10,7 @@ import { ApiResponse } from '../../../../shared/interfaces/api/api-response.inte
 import {
   SyncTrabajadoresResponse,
   Trabajador,
+  TrabajadorDetalle,
   TrabajadorQuery,
 } from '../interfaces/trabajador.interfaces';
 
@@ -24,6 +25,12 @@ export class TrabajadorService extends BaseApiService<
 
   constructor() {
     super(inject(HttpClient));
+  }
+
+  getByNumero(numeroTrabajador: number): Observable<ApiResponse<TrabajadorDetalle>> {
+    return this.http.get<ApiResponse<TrabajadorDetalle>>(
+      `${this.endpoint}/por-numero/${numeroTrabajador}`,
+    );
   }
 
   sync(): Observable<ApiResponse<SyncTrabajadoresResponse>> {

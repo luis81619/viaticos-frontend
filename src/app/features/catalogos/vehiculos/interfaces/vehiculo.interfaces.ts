@@ -12,6 +12,8 @@ export interface Vehiculo extends BaseRecord {
   modelo: number;
   color: string;
   placa: string;
+  kmInicial: number | null;
+  kmFinal: number | null;
   status: boolean;
 }
 
@@ -33,6 +35,8 @@ export interface CreateVehiculoRequest {
   modelo: number;
   color: string;
   placa: string;
+  kmInicial?: number | null;
+  kmFinal?: number | null;
   status?: boolean;
 }
 
@@ -44,6 +48,8 @@ export interface UpdateVehiculoRequest {
   modelo?: number;
   color?: string;
   placa?: string;
+  kmInicial?: number | null;
+  kmFinal?: number | null;
   status?: boolean;
 }
 

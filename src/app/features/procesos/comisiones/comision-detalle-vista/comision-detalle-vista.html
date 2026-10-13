@@ -1,0 +1,117 @@
+<div class="space-y-6">
+  <!-- DATOS GENERALES -->
+  <div class="rounded-lg border border-gray-200 p-4">
+    <h2 class="mb-4 text-base font-semibold text-green-700">Datos generales</h2>
+
+    <dl class="grid grid-cols-1 gap-x-6 gap-y-3 text-sm md:grid-cols-2">
+      <div>
+        <dt class="text-xs text-gray-500">Trabajador</dt>
+        <dd class="text-gray-800">{{ detalle().trabajador }}</dd>
+      </div>
+
+      <div>
+        <dt class="text-xs text-gray-500">Dirección</dt>
+        <dd class="text-gray-800">{{ detalle().direccion }}</dd>
+      </div>
+
+      <div>
+        <dt class="text-xs text-gray-500">Actividad</dt>
+        <dd class="text-gray-800">{{ detalle().actividad }}</dd>
+      </div>
+
+      <div>
+        <dt class="text-xs text-gray-500">Objetivo</dt>
+        <dd class="whitespace-pre-line text-gray-800">{{ detalle().objetivo }}</dd>
+      </div>
+    </dl>
+  </div>
+
+  <div class="grid grid-cols-1 gap-6 md:grid-cols-3">
+    <!-- ORIGEN -->
+    <div class="rounded-lg border border-gray-200 p-4">
+      <h2 class="mb-4 text-base font-semibold text-green-700">Origen</h2>
+
+      <dl class="flex flex-col gap-3 text-sm">
+        <div>
+          <dt class="text-xs text-gray-500">Estado</dt>
+          <dd class="text-gray-800">{{ detalle().estadoOrigen }}</dd>
+        </div>
+
+        <div>
+          <dt class="text-xs text-gray-500">Municipio</dt>
+          <dd class="text-gray-800">{{ detalle().municipioOrigen }}</dd>
+        </div>
+      </dl>
+    </div>
+
+    <!-- VEHÍCULO -->
+    <div class="rounded-lg border border-gray-200 p-4">
+      <h2 class="mb-4 text-base font-semibold text-green-700">Vehículo</h2>
+
+      <dl class="flex flex-col gap-3 text-sm">
+        <div>
+          <dt class="text-xs text-gray-500">Uso</dt>
+          <dd class="text-gray-800">{{ detalle().tipoTransporte }}</dd>
+        </div>
+
+        @if (detalle().vehiculo) {
+          <div>
+            <dt class="text-xs text-gray-500">Vehículo</dt>
+            <dd class="text-gray-800">{{ detalle().vehiculo }}</dd>
+          </div>
+        }
+      </dl>
+    </div>
+
+    <!-- AUTORIZACIÓN -->
+    <div class="rounded-lg border border-gray-200 p-4">
+      <h2 class="mb-4 text-base font-semibold text-green-700">Autorización</h2>
+
+      <dl class="flex flex-col gap-3 text-sm">
+        <div>
+          <dt class="text-xs text-gray-500">Nombre</dt>
+          <dd class="text-gray-800">{{ detalle().autoriza }}</dd>
+        </div>
+
+        <div>
+          <dt class="text-xs text-gray-500">Puesto</dt>
+          <dd class="text-gray-800">{{ detalle().puestoAutoriza }}</dd>
+        </div>
+      </dl>
+    </div>
+  </div>
+
+  <!-- DESTINOS -->
+  <div class="rounded-lg border border-gray-200 p-4">
+    <h2 class="mb-4 text-base font-semibold text-green-700">
+      {{ detalle().destinos.length === 1 ? 'Destino' : 'Destinos' }}
+    </h2>
+
+    <app-ui-data-table [columns]="columns()" [data]="detalle().destinos" />
+  </div>
+
+  <!-- VIÁTICOS -->
+  <div class="rounded-lg border border-gray-200 p-4">
+    <h2 class="mb-4 text-base font-semibold text-green-700">Viáticos</h2>
+
+    <app-resumen-viaticos [resumen]="resumen()" />
+  </div>
+</div>
+
+<ng-template #lugarTemplate let-row>
+  <p class="font-medium text-gray-800">{{ row.lugar }}</p>
+  @if (row.descripcion) {
+    <p class="text-xs text-gray-500">{{ row.descripcion }}</p>
+  }
+  @if (row.conRecurso === false) {
+    <app-ui-badge label="Sin recurso" variant="warning" />
+  }
+</ng-template>
+
+<ng-template #fechasTemplate let-row>
+  {{ row.fechaDesde | date: 'dd/MM/yyyy' : 'UTC' }} – {{ row.fechaHasta | date: 'dd/MM/yyyy' : 'UTC' }}
+</ng-template>
+
+<ng-template #monedaTemplate let-value="value">
+  {{ value | currency: 'MXN' : 'symbol-narrow' }}
+</ng-template>

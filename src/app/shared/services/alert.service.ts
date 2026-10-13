@@ -182,7 +182,7 @@ export class AlertService {
         void this.showAlert({
           icon: 'error',
           title: 'Permisos insuficientes',
-          description: 'No tienes permisos para realizar esta operación.',
+          description: backendMessage ?? 'No tienes permisos para realizar esta operación.',
         });
         return;
 
@@ -217,7 +217,7 @@ export class AlertService {
       void this.showAlert({
         icon: 'error',
         title: 'Permisos insuficientes',
-        description: 'No tienes permisos para realizar esta operación.',
+        description: backendMessage ?? 'No tienes permisos para realizar esta operación.',
       });
       return;
     }
@@ -255,7 +255,7 @@ export class AlertService {
     const details = response.error?.details ?? [];
 
     if (!details.length) {
-      return 'Revisa la información capturada.';
+      return response.error?.message ?? 'Revisa la información capturada.';
     }
 
     return details

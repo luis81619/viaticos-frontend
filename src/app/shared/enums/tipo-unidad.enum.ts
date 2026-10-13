@@ -9,3 +9,8 @@ export enum TipoUnidad {
   ESCOLARIZADO = 8,
   CEMSAD = 9,
 }
+
+// Los tipos 1 a 7 son direcciones; 8 y 9 son planteles.
+export function esDireccion(tipo: TipoUnidad): boolean {
+  return tipo <= TipoUnidad.DIRECCION_CEMSAD;
+}

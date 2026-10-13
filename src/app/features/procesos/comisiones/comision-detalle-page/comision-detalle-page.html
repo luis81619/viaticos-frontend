@@ -1,0 +1,120 @@
+<section class="space-y-6">
+  <header class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+    <div>
+      <h1 class="text-2xl font-semibold text-orange-500">Comisión</h1>
+
+      <p class="mt-1 text-sm text-gray-600">Detalle de la comisión y su estado.</p>
+    </div>
+
+    <div class="flex flex-wrap gap-2">
+      <app-ui-button variant="secondary" (click)="regresar()">
+        <lucide-icon [img]="ArrowLeftIcon" class="mr-1 h-4 w-4" />
+        Regresar
+      </app-ui-button>
+
+      @if (puedeRevisar()) {
+        <app-ui-button variant="primary" (click)="abrirRevision()">
+          <lucide-icon [img]="ClipboardCheckIcon" class="mr-1 h-4 w-4" />
+          Revisión
+        </app-ui-button>
+      }
+    </div>
+  </header>
+
+  @if (comision(); as comision) {
+    <!-- ENCABEZADO DE LA COMISIÓN -->
+    <div class="rounded-xl bg-white p-5 shadow-sm">
+      <dl class="grid grid-cols-2 gap-x-6 gap-y-4 text-sm md:grid-cols-4">
+        <div>
+          <dt class="text-xs text-gray-500">Folio</dt>
+          <dd class="font-semibold text-gray-800">{{ comision.folio ?? 'Sin asignar' }}</dd>
+        </div>
+
+        <div>
+          <dt class="text-xs text-gray-500">Fecha de elaboración</dt>
+          <dd class="text-gray-800">{{ comision.fechaElaboracion | date: 'dd/MM/yyyy' : 'UTC' }}</dd>
+        </div>
+
+        <div>
+          <dt class="text-xs text-gray-500">Fecha de autorización</dt>
+          <dd class="text-gray-800">
+            {{ comision.fechaAutorizacion ? (comision.fechaAutorizacion | date: 'dd/MM/yyyy' : 'UTC') : '—' }}
+          </dd>
+        </div>
+
+        <div>
+          <dt class="text-xs text-gray-500">Estado</dt>
+          <dd>
+            <app-ui-badge
+              [label]="getEstadoLabel(comision.estado)"
+              [variant]="getEstadoVariant(comision.estado)"
+            />
+          </dd>
+        </div>
+      </dl>
+    </div>
+
+    <div class="rounded-xl bg-white p-5 shadow-sm">
+      <app-comision-detalle-vista [detalle]="detalle()!" [resumen]="resumen()" />
+    </div>
+
+    <!-- REVISIONES -->
+    <div class="rounded-xl bg-white p-5 shadow-sm">
+      <h2 class="mb-4 text-base font-semibold text-green-700">Revisiones</h2>
+
+      <app-ui-data-table [columns]="columnasRevisiones()" [data]="comision.revisiones" />
+    </div>
+
+  } @else if (!isLoading()) {
+    <div class="rounded-xl bg-white p-5 shadow-sm">
+      <app-ui-empty-state
+        title="Comisión no encontrada"
+        description="No fue posible cargar la información de la comisión."
+      />
+    </div>
+  }
+
+  <!-- REVISIÓN (sólo director, comisión Enviada) -->
+  <app-ui-modal
+    [isOpen]="revisionAbierta()"
+    title="Revisión de la comisión"
+    size="lg"
+    (close)="cerrarRevision()"
+  >
+    <div class="flex flex-col gap-4">
+      <app-ui-form-textarea-input label="Observaciones" [rows]="4" [control]="observaciones" />
+
+      <p class="text-xs text-gray-500">
+        Las observaciones son obligatorias para enviar a corrección o rechazar.
+      </p>
+
+      <div class="flex flex-wrap justify-end gap-2 border-t border-gray-100 pt-4">
+        <app-ui-button variant="warning" [disabled]="revisando()" (click)="revisar('correccion')">
+          <lucide-icon [img]="Undo2Icon" class="mr-1 h-4 w-4" />
+          Corrección
+        </app-ui-button>
+
+        <app-ui-button variant="danger" [disabled]="revisando()" (click)="revisar('rechazar')">
+          <lucide-icon [img]="BanIcon" class="mr-1 h-4 w-4" />
+          Rechazar
+        </app-ui-button>
+
+        <app-ui-button variant="primary" [disabled]="revisando()" (click)="revisar('autorizar')">
+          <lucide-icon [img]="CheckIcon" class="mr-1 h-4 w-4" />
+          Autorizar
+        </app-ui-button>
+      </div>
+    </div>
+  </app-ui-modal>
+
+  <app-ui-loading-overlay [visible]="isLoading()" message="Cargando comisión..." />
+  <app-ui-loading-overlay [visible]="revisando()" message="Guardando revisión..." />
+</section>
+
+<ng-template #fechaTemplate let-value="value">
+  {{ value | date: 'dd/MM/yyyy HH:mm' }}
+</ng-template>
+
+<ng-template #estadoTemplate let-row>
+  <app-ui-badge [label]="getEstadoLabel(row.estado)" [variant]="getEstadoVariant(row.estado)" />
+</ng-template>

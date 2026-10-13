@@ -1,0 +1,75 @@
+<section class="space-y-6">
+  <header class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+    <div>
+      <h1 class="text-2xl font-semibold text-orange-500">Comisiones</h1>
+
+      <p class="mt-1 text-sm text-gray-600">
+        Consulta las comisiones registradas y su estado.
+      </p>
+    </div>
+
+    <app-ui-button variant="primary" (click)="nuevaComision()">
+      <lucide-icon [img]="PlusIcon" class="mr-1 h-5 w-5" />
+      Nueva comisión
+    </app-ui-button>
+  </header>
+
+  <div class="rounded-xl bg-white p-5 shadow-sm">
+    <app-ui-pagination
+      [totalItems]="store.totalRecords()"
+      [page]="store.currentPage()"
+      [pageSize]="store.pageSize()"
+      (pageChange)="onPageChange($event)"
+      (pageSizeChange)="onPageSizeChange($event)"
+    />
+
+    <app-ui-data-table
+      [columns]="columns()"
+      [data]="store.comisiones()"
+      [actions]="actions"
+      [loading]="store.isLoading()"
+      (actionClick)="onAction($event)"
+      (filterChange)="onFilterChange($event)"
+    />
+
+    <app-ui-pagination
+      [totalItems]="store.totalRecords()"
+      [page]="store.currentPage()"
+      [pageSize]="store.pageSize()"
+      (pageChange)="onPageChange($event)"
+      (pageSizeChange)="onPageSizeChange($event)"
+    />
+  </div>
+</section>
+
+<ng-template #direccionTemplate let-row>
+  {{ describirDireccion(row.direccion) }}
+</ng-template>
+
+<ng-template #folioTemplate let-row>
+  {{ row.folio ?? 'Sin folio' }}
+</ng-template>
+
+<ng-template #trabajadorTemplate let-row>
+  @if (row.trabajador) {
+    {{ row.trabajador.numeroTrabajador }} {{ row.trabajador.nombreCompleto }}
+  }
+</ng-template>
+
+<ng-template #totalTemplate let-value="value">
+  {{ value | currency: 'MXN' : 'symbol-narrow' }}
+</ng-template>
+
+<ng-template #fechaTemplate let-value="value">
+  {{ value ? (value | date: 'dd/MM/yyyy' : 'UTC') : '—' }}
+</ng-template>
+
+<ng-template #destinoTemplate let-row>
+  @for (destino of row.destinos; track destino.id; let ultimo = $last) {
+    {{ destino.municipio?.nombre }}{{ ultimo ? '' : ', ' }}
+  }
+</ng-template>
+
+<ng-template #estadoTemplate let-row>
+  <app-ui-badge [label]="getEstadoLabel(row.estado)" [variant]="getEstadoVariant(row.estado)" />
+</ng-template>

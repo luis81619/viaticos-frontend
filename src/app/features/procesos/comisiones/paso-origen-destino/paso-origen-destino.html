@@ -1,0 +1,261 @@
+<div class="space-y-6">
+  <!-- ORIGEN -->
+  <div class="rounded-lg border border-gray-200 p-4">
+    <h2 class="mb-4 text-base font-semibold text-green-700">Origen</h2>
+
+    <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+      <app-ui-form-select-input
+        label="Estado"
+        placeholder="Seleccione un estado"
+        [control]="origenForm.controls.estadoId"
+        [options]="estadoOptions()"
+      />
+
+      <app-ui-form-select-input
+        label="Municipio"
+        [placeholder]="origenForm.controls.estadoId.value ? 'Seleccione un municipio' : 'Primero seleccione un estado'"
+        [control]="origenForm.controls.municipioId"
+        [options]="municipioOrigenOptions()"
+      />
+    </div>
+  </div>
+
+  <!-- DESTINOS -->
+  <div class="rounded-lg border border-gray-200 p-4">
+    <div class="mb-4 flex items-center justify-between gap-4">
+      <h2 class="text-base font-semibold text-green-700">Destinos</h2>
+
+      <app-ui-button
+        variant="primary"
+        [disabled]="mostrarFormularioDestino()"
+        (click)="abrirFormularioDestino()"
+      >
+        <lucide-icon [img]="PlusIcon" class="mr-1 h-4 w-4" />
+        Nuevo destino
+      </app-ui-button>
+    </div>
+
+    @if (mostrarFormularioDestino()) {
+      <div class="mb-4 rounded-lg bg-gray-50 p-4">
+        <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <app-ui-form-select-input
+            label="Estado"
+            placeholder="Seleccione un estado"
+            [control]="destinoForm.controls.estadoId"
+            [options]="estadoOptions()"
+          />
+
+          <app-ui-form-select-input
+            label="Municipio"
+            [placeholder]="destinoForm.controls.estadoId.value ? 'Seleccione un municipio' : 'Primero seleccione un estado'"
+            [control]="destinoForm.controls.municipioId"
+            [options]="municipioDestinoOptions()"
+          />
+
+          <div class="grid grid-cols-2 gap-4">
+            <app-ui-form-text-input label="Desde" type="date" [control]="destinoForm.controls.fechaDesde" />
+            <app-ui-form-text-input label="Hasta" type="date" [control]="destinoForm.controls.fechaHasta" />
+          </div>
+
+          <app-ui-form-select-input
+            label="Nivel de aplicación"
+            placeholder="Seleccione un nivel"
+            [control]="destinoForm.controls.nivelAplicacionId"
+            [options]="nivelOptions()"
+          />
+
+          <div class="md:col-span-2">
+            <app-ui-form-text-input
+              label="Descripción del destino"
+              [control]="destinoForm.controls.descripcion"
+            />
+          </div>
+        </div>
+
+        <div class="mt-4 flex justify-center gap-3">
+          <app-ui-button variant="danger" (click)="cerrarFormularioDestino()">
+            <lucide-icon [img]="XIcon" class="mr-1 h-4 w-4" />
+            Cancelar
+          </app-ui-button>
+
+          <app-ui-button
+            variant="primary"
+            [disabled]="store.calculandoDestino()"
+            (click)="agregarDestino()"
+          >
+            <lucide-icon [img]="CheckIcon" class="mr-1 h-4 w-4" />
+            Agregar
+          </app-ui-button>
+        </div>
+      </div>
+    }
+
+    <app-ui-data-table
+      [columns]="columns()"
+      [data]="store.destinos()"
+      [actions]="actions()"
+      (actionClick)="onAction($event)"
+    />
+  </div>
+
+  <!-- VIÁTICOS -->
+  <div class="rounded-lg border border-gray-200 p-4">
+    <h2 class="mb-4 text-base font-semibold text-green-700">Viáticos</h2>
+
+    <app-resumen-viaticos [resumen]="store.resumenViaticos()" />
+  </div>
+
+  <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
+    <!-- VEHÍCULO -->
+    <div class="rounded-lg border border-gray-200 p-4">
+      <h2 class="mb-4 text-base font-semibold text-green-700">Vehículo</h2>
+
+      <div class="flex flex-col gap-4">
+        <app-ui-form-radio-group
+          label="Tipo de transporte"
+          [control]="vehiculoForm.controls.tipoTransporte"
+          [options]="tipoTransporteOptions"
+        />
+
+        @switch (vehiculoForm.controls.tipoTransporte.value) {
+          @case (VehiculoTipo.OFICIAL) {
+            <app-ui-form-select-input
+              label="Vehículo oficial"
+              placeholder="Seleccione el vehículo oficial"
+              [control]="vehiculoForm.controls.vehiculoOficialId"
+              [options]="oficialOptions()"
+            />
+          }
+
+          @case (VehiculoTipo.PARTICULAR) {
+            <app-ui-form-select-input
+              label="Vehículo particular"
+              placeholder="Seleccione el vehículo particular"
+              [control]="vehiculoForm.controls.particularId"
+              [options]="particularOptions()"
+            />
+
+            @if (vehiculoForm.controls.particularId.value) {
+              <div class="rounded-lg bg-gray-50 p-4">
+                <p class="mb-3 text-xs text-gray-500">
+                  Datos del vehículo. Puedes corregirlos; los cambios se guardan en el catálogo al
+                  enviar la comisión.
+                </p>
+
+                <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <app-ui-form-select-input
+                    label="Clase"
+                    placeholder="Seleccione una clase"
+                    [control]="particularForm.controls.clase"
+                    [options]="claseOptions"
+                  />
+                  <app-ui-form-text-input label="Marca" [control]="particularForm.controls.marca" />
+                  <app-ui-form-text-input label="Submarca" [control]="particularForm.controls.submarca" />
+                  <app-ui-form-text-input
+                    label="Año"
+                    type="number"
+                    [uppercase]="false"
+                    [control]="particularForm.controls.modelo"
+                  />
+                  <app-ui-form-text-input label="Color" [control]="particularForm.controls.color" />
+                  <app-ui-form-text-input label="Placa" [control]="particularForm.controls.placa" />
+                </div>
+              </div>
+            }
+          }
+        }
+      </div>
+    </div>
+
+    <!-- AUTORIZACIÓN -->
+    <div class="rounded-lg border border-gray-200 p-4">
+      <h2 class="mb-4 text-base font-semibold text-green-700">Autorización</h2>
+
+      <div class="flex flex-col gap-4">
+        <app-ui-form-text-input label="Nombre" [control]="autorizacionForm.controls.autoriza" />
+        <app-ui-form-text-input label="Puesto" [control]="autorizacionForm.controls.puestoAutoriza" />
+      </div>
+    </div>
+  </div>
+
+  <app-ui-loading-overlay [visible]="store.calculandoDestino()" message="Calculando viáticos del destino..." />
+</div>
+
+<ng-template #destinoTemplate let-row>
+  @if (row.id === editandoId()) {
+    <div class="flex min-w-56 flex-col gap-2">
+      <app-ui-form-select-input
+        label="Estado"
+        placeholder="Seleccione un estado"
+        [control]="edicionForm.controls.estadoId"
+        [options]="estadoOptions()"
+      />
+      <app-ui-form-select-input
+        label="Municipio"
+        placeholder="Seleccione un municipio"
+        [control]="edicionForm.controls.municipioId"
+        [options]="municipioEdicionOptions()"
+      />
+      <app-ui-form-text-input label="Descripción" [control]="edicionForm.controls.descripcion" />
+    </div>
+  } @else {
+    <p class="font-medium text-gray-800">{{ row.municipioNombre }}, {{ row.estadoNombre }}</p>
+    @if (row.descripcion) {
+      <p class="text-xs text-gray-500">{{ row.descripcion }}</p>
+    }
+    @if (!row.conRecurso) {
+      <app-ui-badge label="Sin recurso" variant="warning" />
+    }
+  }
+</ng-template>
+
+<ng-template #fechasTemplate let-row>
+  @if (row.id === editandoId()) {
+    <div class="flex min-w-40 flex-col gap-2">
+      <app-ui-form-text-input label="Desde" type="date" [control]="edicionForm.controls.fechaDesde" />
+      <app-ui-form-text-input label="Hasta" type="date" [control]="edicionForm.controls.fechaHasta" />
+    </div>
+  } @else {
+    {{ row.fechaDesde | date: 'dd/MM/yyyy' : 'UTC' }} – {{ row.fechaHasta | date: 'dd/MM/yyyy' : 'UTC' }}
+  }
+</ng-template>
+
+<ng-template #nivelTemplate let-row>
+  @if (row.id === editandoId()) {
+    <div class="min-w-40">
+      <app-ui-form-select-input
+        label="Nivel"
+        placeholder="Seleccione un nivel"
+        [control]="edicionForm.controls.nivelAplicacionId"
+        [options]="nivelOptions()"
+      />
+    </div>
+  } @else {
+    {{ row.nivelNombre }}
+  }
+</ng-template>
+
+<ng-template #edicionTemplate let-row>
+  @if (row.id === editandoId()) {
+    <div class="flex flex-col items-stretch gap-2">
+      <app-ui-button
+        variant="primary"
+        size="sm"
+        [disabled]="store.calculandoDestino()"
+        (click)="guardarEdicion(row)"
+      >
+        <lucide-icon [img]="CheckIcon" class="mr-1 h-4 w-4" />
+        Guardar
+      </app-ui-button>
+
+      <app-ui-button variant="danger" size="sm" (click)="cancelarEdicion()">
+        <lucide-icon [img]="XIcon" class="mr-1 h-4 w-4" />
+        Cancelar
+      </app-ui-button>
+    </div>
+  }
+</ng-template>
+
+<ng-template #monedaTemplate let-value="value">
+  {{ value | currency: 'MXN' : 'symbol-narrow' }}
+</ng-template>

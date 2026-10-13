@@ -26,6 +26,10 @@ export interface Trabajador {
   updatedAt: string | Date;
 }
 
+export interface TrabajadorDetalle extends Trabajador {
+  banco: { id: string; nombre: string } | null;
+}
+
 export interface TrabajadorQuery extends BaseQuery {
   nombre?: string;
   rfc?: string;

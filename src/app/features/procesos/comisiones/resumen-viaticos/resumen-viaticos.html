@@ -1,0 +1,25 @@
+<div class="grid grid-cols-2 gap-4 md:grid-cols-4">
+  @for (tarjeta of tarjetas(); track tarjeta.titulo) {
+    <div class="flex items-center gap-3 rounded-lg bg-green-50 p-3">
+      <lucide-icon [img]="tarjeta.icono" class="h-5 w-5 shrink-0 text-green-700" />
+
+      <div>
+        <p class="text-xs text-gray-500">{{ tarjeta.titulo }}</p>
+        <p class="text-sm font-semibold text-gray-800">
+          @if (tarjeta.esMoneda) {
+            {{ tarjeta.valor | currency: 'MXN' : 'symbol-narrow' }}
+          } @else {
+            {{ tarjeta.valor }}
+          }
+        </p>
+      </div>
+    </div>
+  }
+</div>
+
+<div class="mt-4 flex items-center justify-between rounded-lg bg-green-50 px-4 py-2">
+  <span class="text-sm font-semibold text-gray-700">Total general</span>
+  <span class="text-base font-semibold text-green-700">
+    {{ resumen().total | currency: 'MXN' : 'symbol-narrow' }}
+  </span>
+</div>

@@ -1,0 +1,81 @@
+<section class="space-y-6">
+  <!-- ENCABEZADO -->
+  <header class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+    <div>
+      <h1 class="text-2xl font-semibold text-orange-500">Nueva comisión</h1>
+
+      <p class="mt-1 text-sm text-gray-600">
+        Captura los datos de la comisión en tres pasos.
+      </p>
+    </div>
+
+    <app-ui-button variant="danger" (click)="cancelar()">
+      Cancelar
+    </app-ui-button>
+  </header>
+
+  <div class="rounded-xl bg-white p-6 shadow-sm">
+    <!-- PASOS -->
+    <ol class="grid grid-cols-3 gap-4">
+      @for (paso of pasos; track paso.numero) {
+        <li class="flex flex-col items-center gap-2 text-center">
+          <span
+            class="flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold text-white"
+            [class.bg-blue-500]="store.paso() === paso.numero"
+            [class.bg-gray-400]="store.paso() !== paso.numero"
+          >
+            {{ paso.numero }}
+          </span>
+
+          <span
+            class="text-xs"
+            [class.font-semibold]="store.paso() === paso.numero"
+            [class.text-blue-500]="store.paso() === paso.numero"
+            [class.text-gray-500]="store.paso() !== paso.numero"
+          >
+            {{ paso.titulo }}
+          </span>
+        </li>
+      }
+    </ol>
+
+    <!-- CONTENIDO DEL PASO -->
+    <div class="mt-6">
+      @switch (store.paso()) {
+        @case (1) {
+          <app-paso-datos-generales />
+        }
+        @case (2) {
+          <app-paso-origen-destino />
+        }
+        @case (3) {
+          <app-paso-resumen />
+        }
+      }
+    </div>
+
+    <!-- NAVEGACIÓN -->
+    <div class="mt-6 flex justify-between">
+      <app-ui-button
+        variant="primary"
+        [disabled]="store.paso() === 1 || store.enviando()"
+        (click)="store.anterior()"
+      >
+        Anterior
+      </app-ui-button>
+
+      @if (store.paso() < 3) {
+        <app-ui-button variant="primary" (click)="store.siguiente()">
+          Siguiente
+        </app-ui-button>
+      } @else {
+        <app-ui-button variant="primary" [disabled]="store.enviando()" (click)="enviar()">
+          <lucide-icon [img]="SendIcon" class="mr-1 h-4 w-4" />
+          Finalizar y enviar comisión
+        </app-ui-button>
+      }
+    </div>
+  </div>
+
+  <app-ui-loading-overlay [visible]="store.enviando()" message="Enviando comisión..." />
+</section>

@@ -83,6 +83,11 @@ export class Sidebar {
           route: '/procesos/solicitudes',
           roles: ['ADMIN', 'CAPTURISTA'],
         },
+        {
+          label: 'Comisiones',
+          route: '/procesos/comisiones',
+          roles: [Role.DIRECTOR, Role.TRABAJADOR],
+        },
       ],
     },
   ];

@@ -9,7 +9,7 @@ import { UiFormFooter } from '../../../../../shared/components/ui-form-footer/ui
 import { SelectOption } from '../../../../../shared/interfaces/select-option.interface';
 
 import { Vehiculo, VehiculoFormSubmitEvent } from '../../interfaces/vehiculo.interfaces';
-import { VehiculoTipo, VEHICULO_TIPO_OPTIONS } from '../../enums/vehiculo-tipo.enum';
+import { VehiculoTipo, VEHICULO_TIPO_CATALOGO_OPTIONS } from '../../enums/vehiculo-tipo.enum';
 import { VehiculoClase, VEHICULO_CLASE_OPTIONS } from '../../enums/vehiculo-clase.enum';
 
 @Component({
@@ -27,7 +27,7 @@ export class VehiculoFormModal {
   close = output<void>();
   saved = output<VehiculoFormSubmitEvent>();
 
-  tipoOptions: SelectOption<VehiculoTipo>[] = VEHICULO_TIPO_OPTIONS;
+  tipoOptions: SelectOption<VehiculoTipo>[] = VEHICULO_TIPO_CATALOGO_OPTIONS;
   claseOptions: SelectOption<VehiculoClase>[] = VEHICULO_CLASE_OPTIONS;
 
   form = this.fb.nonNullable.group({
@@ -42,6 +42,8 @@ export class VehiculoFormModal {
     ]),
     color: this.fb.nonNullable.control('', [Validators.required, Validators.maxLength(50)]),
     placa: this.fb.nonNullable.control('', [Validators.required, Validators.maxLength(20)]),
+    kmInicial: this.fb.control<number | null>(null, [Validators.min(0)]),
+    kmFinal: this.fb.control<number | null>(null, [Validators.min(0)]),
   });
 
   constructor() {
@@ -58,6 +60,8 @@ export class VehiculoFormModal {
               modelo: vehiculo.modelo,
               color: vehiculo.color,
               placa: vehiculo.placa,
+              kmInicial: vehiculo.kmInicial,
+              kmFinal: vehiculo.kmFinal,
             }
           : this.blankFormValue(),
       );
@@ -84,6 +88,8 @@ export class VehiculoFormModal {
       modelo: null,
       color: '',
       placa: '',
+      kmInicial: null,
+      kmFinal: null,
     };
   }
 
@@ -105,6 +111,8 @@ export class VehiculoFormModal {
       modelo: Number(value.modelo),
       color: value.color.trim().toUpperCase(),
       placa: value.placa.trim().toUpperCase(),
+      kmInicial: value.kmInicial,
+      kmFinal: value.kmFinal,
     };
 
     const currentVehiculo = this.vehiculo();

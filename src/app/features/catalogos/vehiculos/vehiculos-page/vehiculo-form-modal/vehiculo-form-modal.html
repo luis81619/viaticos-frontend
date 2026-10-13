@@ -62,6 +62,22 @@
       [control]="form.controls.placa"
     />
 
+    <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+      <app-ui-form-text-input
+        label="Km inicial"
+        type="number"
+        [uppercase]="false"
+        [control]="form.controls.kmInicial"
+      />
+
+      <app-ui-form-text-input
+        label="Km final"
+        type="number"
+        [uppercase]="false"
+        [control]="form.controls.kmFinal"
+      />
+    </div>
+
     <app-ui-form-footer
       [submitLabel]="vehiculo() ? 'ACTUALIZAR' : 'GUARDAR'"
       [loading]="isSaving()"
