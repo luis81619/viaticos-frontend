@@ -94,7 +94,11 @@
   <div class="rounded-lg border border-gray-200 p-4">
     <h2 class="mb-4 text-base font-semibold text-green-700">Viáticos</h2>
 
-    <app-resumen-viaticos [resumen]="resumen()" />
+    @if (detalle().conViaticos) {
+      <app-resumen-viaticos [resumen]="resumen()" />
+    } @else {
+      <p class="text-sm text-gray-600">Comisión sin viáticos: no lleva montos.</p>
+    }
   </div>
 </div>
 
@@ -103,7 +107,7 @@
   @if (row.descripcion) {
     <p class="text-xs text-gray-500">{{ row.descripcion }}</p>
   }
-  @if (row.conRecurso === false) {
+  @if (row.conRecurso === false && detalle().conViaticos) {
     <app-ui-badge label="Sin recurso" variant="warning" />
   }
 </ng-template>

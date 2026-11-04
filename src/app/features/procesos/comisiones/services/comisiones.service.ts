@@ -9,10 +9,12 @@ import { BaseApiService } from '../../../../shared/services/base-api.service';
 import { ApiResponse } from '../../../../shared/interfaces/api/api-response.interface';
 
 import {
+  BorradorComisionRequest,
   CalcularDestinoQuery,
   CalculoDestino,
   Comision,
   ComisionQuery,
+  ConteoEstado,
   CreateComisionRequest,
   ResponsableActividad,
   RevisarComisionRequest,
@@ -42,8 +44,32 @@ export class ComisionesService extends BaseApiService<
     );
   }
 
+  conteoPorEstado(): Observable<ApiResponse<ConteoEstado[]>> {
+    return this.http.get<ApiResponse<ConteoEstado[]>>(`${this.endpoint}/conteo`);
+  }
+
   revisar(id: string, request: RevisarComisionRequest): Observable<ApiResponse<Comision>> {
     return this.http.patch<ApiResponse<Comision>>(`${this.endpoint}/${id}/revisar`, request);
+  }
+
+  cancelar(id: string): Observable<ApiResponse<Comision>> {
+    return this.http.patch<ApiResponse<Comision>>(`${this.endpoint}/${id}/cancelar`, {});
+  }
+
+  crearBorrador(request: BorradorComisionRequest): Observable<ApiResponse<Comision>> {
+    return this.http.post<ApiResponse<Comision>>(`${this.endpoint}/borradores`, request);
+  }
+
+  guardarBorrador(id: string, request: BorradorComisionRequest): Observable<ApiResponse<Comision>> {
+    return this.http.put<ApiResponse<Comision>>(`${this.endpoint}/${id}/borrador`, request);
+  }
+
+  enviarBorrador(id: string): Observable<ApiResponse<Comision>> {
+    return this.http.patch<ApiResponse<Comision>>(`${this.endpoint}/${id}/enviar`, {});
+  }
+
+  eliminarBorrador(id: string): Observable<ApiResponse<null>> {
+    return this.http.delete<ApiResponse<null>>(`${this.endpoint}/${id}`);
   }
 
   obtenerResponsable(actividadId: string): Observable<ApiResponse<ResponsableActividad>> {

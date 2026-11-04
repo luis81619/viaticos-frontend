@@ -1,14 +1,11 @@
 import {
-  AfterViewInit,
   ChangeDetectionStrategy,
   Component,
   DestroyRef,
   OnInit,
-  TemplateRef,
   computed,
   inject,
   signal,
-  viewChild,
 } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { FormControl, Validators } from '@angular/forms';
@@ -29,28 +26,22 @@ import { Role } from '../../../../core/auth/interfaces/role';
 import { SessionService } from '../../../../core/auth/services/session.service';
 import { UiBadge } from '../../../../shared/components/ui-badge/ui-badge';
 import { UiButton } from '../../../../shared/components/ui-button/ui-button';
-import { UiDataTable } from '../../../../shared/components/ui-data-table/ui-data-table';
 import { UiEmptyState } from '../../../../shared/components/ui-empty-state/ui-empty-state';
 import { UiFormTextareaInput } from '../../../../shared/components/ui-form-textarea-input/ui-form-textarea-input';
 import { UiLoadingOverlay } from '../../../../shared/components/ui-loading-overlay/ui-loading-overlay';
 import { UiModal } from '../../../../shared/components/ui-modal/ui-modal';
-import { TableColumn } from '../../../../shared/interfaces/table-column.interface';
 import { AlertService } from '../../../../shared/services/alert.service';
 
 import { getVehiculoTipoLabel } from '../../../catalogos/vehiculos/enums/vehiculo-tipo.enum';
 
 import { ComisionDetalleVista } from '../comision-detalle-vista/comision-detalle-vista';
+import { ComisionHistorial } from '../comision-historial/comision-historial';
 import {
   ComisionEstado,
   getComisionEstadoLabel,
   getComisionEstadoVariant,
 } from '../enums/comision-estado.enum';
-import {
-  AccionRevision,
-  Comision,
-  ComisionRevision,
-  DetalleComisionVista,
-} from '../interfaces/comision.interfaces';
+import { AccionRevision, Comision, DetalleComisionVista } from '../interfaces/comision.interfaces';
 import { ComisionesService } from '../services/comisiones.service';
 import {
   calcularResumenViaticos,
@@ -89,9 +80,9 @@ const MENSAJES_REVISION: Record<
     DatePipe,
     LucideAngularModule,
     ComisionDetalleVista,
+    ComisionHistorial,
     UiBadge,
     UiButton,
-    UiDataTable,
     UiEmptyState,
     UiFormTextareaInput,
     UiLoadingOverlay,
@@ -100,7 +91,7 @@ const MENSAJES_REVISION: Record<
   templateUrl: './comision-detalle-page.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export default class ComisionDetallePage implements OnInit, AfterViewInit {
+export default class ComisionDetallePage implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly session = inject(SessionService);
@@ -133,17 +124,12 @@ export default class ComisionDetallePage implements OnInit, AfterViewInit {
 
   readonly resumen = computed(() => calcularResumenViaticos(this.comision()?.destinos ?? []));
 
-  // Sólo el director revisa, y sólo mientras la comisión sigue Enviada.
+  // Sólo el director revisa, y sólo mientras la comisión sigue Por autorizar.
   readonly puedeRevisar = computed(
     () =>
       this.session.roles().includes(Role.DIRECTOR) &&
-      this.comision()?.estado === ComisionEstado.ENVIADA,
+      this.comision()?.estado === ComisionEstado.POR_AUTORIZAR,
   );
-
-  readonly fechaTemplate = viewChild.required<TemplateRef<unknown>>('fechaTemplate');
-  readonly estadoTemplate = viewChild.required<TemplateRef<unknown>>('estadoTemplate');
-
-  readonly columnasRevisiones = signal<TableColumn<ComisionRevision>[]>([]);
 
   ngOnInit(): void {
     const id = this.route.snapshot.paramMap.get('id') ?? '';
@@ -161,15 +147,6 @@ export default class ComisionDetallePage implements OnInit, AfterViewInit {
           this.alertService.handleHttpError(error);
         },
       });
-  }
-
-  ngAfterViewInit(): void {
-    this.columnasRevisiones.set([
-      { key: 'fecha', title: 'Fecha', template: this.fechaTemplate() },
-      { key: 'estado', title: 'Acción', template: this.estadoTemplate() },
-      { key: 'observaciones', title: 'Observaciones' },
-      { key: 'usuario', title: 'Usuario' },
-    ]);
   }
 
   regresar(): void {
@@ -230,12 +207,13 @@ export default class ComisionDetallePage implements OnInit, AfterViewInit {
 
   private aVista(c: Comision): DetalleComisionVista {
     return {
+      conViaticos: c.conViaticos,
       trabajador: c.trabajador
         ? `${c.trabajador.numeroTrabajador ?? ''} ${c.trabajador.nombreCompleto}`.trim()
         : '',
       direccion: describirDireccion(c.direccion),
       actividad: describirActividad(c.actividad),
-      objetivo: c.objetivo,
+      objetivo: c.objetivo ?? '',
       estadoOrigen: c.municipioOrigen?.estado ?? '',
       municipioOrigen: c.municipioOrigen?.nombre ?? '',
       destinos: c.destinos.map((d) => ({

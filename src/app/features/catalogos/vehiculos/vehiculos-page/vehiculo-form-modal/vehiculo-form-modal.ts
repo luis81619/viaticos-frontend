@@ -24,6 +24,8 @@ export class VehiculoFormModal {
   isOpen = input(false);
   vehiculo = input<Vehiculo | null>(null);
   isSaving = input(false);
+  // Con tipo fijo (p. ej. particular desde la comisión) no se muestra el select de tipo.
+  tipoFijo = input<VehiculoTipo | null>(null);
   close = output<void>();
   saved = output<VehiculoFormSubmitEvent>();
 
@@ -42,8 +44,6 @@ export class VehiculoFormModal {
     ]),
     color: this.fb.nonNullable.control('', [Validators.required, Validators.maxLength(50)]),
     placa: this.fb.nonNullable.control('', [Validators.required, Validators.maxLength(20)]),
-    kmInicial: this.fb.control<number | null>(null, [Validators.min(0)]),
-    kmFinal: this.fb.control<number | null>(null, [Validators.min(0)]),
   });
 
   constructor() {
@@ -60,8 +60,6 @@ export class VehiculoFormModal {
               modelo: vehiculo.modelo,
               color: vehiculo.color,
               placa: vehiculo.placa,
-              kmInicial: vehiculo.kmInicial,
-              kmFinal: vehiculo.kmFinal,
             }
           : this.blankFormValue(),
       );
@@ -81,15 +79,13 @@ export class VehiculoFormModal {
 
   private blankFormValue() {
     return {
-      tipo: null,
+      tipo: this.tipoFijo(),
       clase: null,
       marca: '',
       submarca: '',
       modelo: null,
       color: '',
       placa: '',
-      kmInicial: null,
-      kmFinal: null,
     };
   }
 
@@ -111,8 +107,6 @@ export class VehiculoFormModal {
       modelo: Number(value.modelo),
       color: value.color.trim().toUpperCase(),
       placa: value.placa.trim().toUpperCase(),
-      kmInicial: value.kmInicial,
-      kmFinal: value.kmFinal,
     };
 
     const currentVehiculo = this.vehiculo();

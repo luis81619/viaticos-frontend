@@ -12,10 +12,9 @@ import { FormsModule, ReactiveFormsModule, FormBuilder, Validators } from '@angu
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 import { MunicipiosZonasStore } from '../store/municipios-zonas.store';
-import { Municipio, MunicipioFormSubmitEvent } from '../../municipios/interfaces/municipio.interfaces';
+import { Municipio } from '../../municipios/interfaces/municipio.interfaces';
 import { EstadoService } from '../../municipios/services/estados.service';
 import { ZonaService } from '../../municipios/services/zonas.service';
-import { MunicipioFormModal } from '../../municipios/municipio-form-modal/municipio-form-modal';
 import { TarifasModal } from '../tarifas-modal/tarifas-modal';
 import { AlertService } from '../../../../shared/services/alert.service';
 import { noNumbers } from '../../../../shared/validators/no-numbers.validator';
@@ -39,7 +38,6 @@ type TabPanel = 'detalles' | 'editar';
     CommonModule,
     FormsModule,
     ReactiveFormsModule,
-    MunicipioFormModal,
     TarifasModal,
     NoNumbersDirective,
   ],
@@ -57,8 +55,6 @@ export default class MunicipiosZonasPage implements OnInit {
 
   estadoOptions = signal<EstadoOption[]>([]);
   zonaOptions = signal<ZonaOption[]>([]);
-
-  isMunicipioModalOpen = signal(false);
 
   isTarifasModalOpen = signal(false);
 
@@ -165,25 +161,12 @@ export default class MunicipiosZonasPage implements OnInit {
     }
   }
 
-  openAddModal(): void {
-    this.isMunicipioModalOpen.set(true);
-  }
-
-  closeMunicipioModal(): void {
-    this.isMunicipioModalOpen.set(false);
-  }
-
   openTarifasModal(): void {
     this.isTarifasModalOpen.set(true);
   }
 
   closeTarifasModal(): void {
     this.isTarifasModalOpen.set(false);
-  }
-
-  onMunicipioSaved(event: MunicipioFormSubmitEvent): void {
-    if (event.mode !== 'create') return;
-    this.store.create(event.request, () => this.closeMunicipioModal());
   }
 
   async saveEdit(): Promise<void> {

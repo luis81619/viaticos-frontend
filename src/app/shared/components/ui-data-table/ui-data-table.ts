@@ -12,6 +12,7 @@ import { TableActionEvent } from '../../interfaces/table-action-event.interface'
 import { CommonModule } from '@angular/common';
 import { ActionMenu } from '../action-menu/action-menu';
 import { TableFilterEvent } from '../../interfaces/table-filter-event.interface';
+import { TableFilter } from '../../interfaces/table-filter.interface';
 import { UppercaseDirective } from '../../directives/uppercase.directive';
 import { UiEmptyState } from '../ui-empty-state/ui-empty-state';
 
@@ -55,6 +56,10 @@ export class UiDataTable {
   actions = input<TableAction<any>[]>([]);
   loading = input(false);
 
+  // Filas clicables: emiten rowClick y la del selectedId queda resaltada.
+  selectable = input(false);
+  selectedId = input<string | null>(null);
+
   /*
   |--------------------------------------------------------------------------
   | OUTPUTS
@@ -62,6 +67,8 @@ export class UiDataTable {
   */
 
   actionClick = output<TableActionEvent<any>>();
+
+  rowClick = output<any>();
 
   /*
   |--------------------------------------------------------------------------
@@ -75,6 +82,12 @@ export class UiDataTable {
 
   }
 
+  onRowClick(row: any): void {
+    if (this.selectable()) {
+      this.rowClick.emit(row);
+    }
+  }
+
   onTextFilterChange(key: string, event: Event): void {
     const value = (
       event.target as HTMLInputElement
@@ -84,6 +97,11 @@ export class UiDataTable {
       key,
       value,
     });
+  }
+
+  // Sin value definido el select queda como siempre (lo controla el navegador).
+  isOptionSelected(filter: TableFilter | undefined, optionValue: unknown): boolean {
+    return filter?.value !== undefined && String(filter.value) === String(optionValue);
   }
 
   onFilterChange(key: string, event: Event): void {

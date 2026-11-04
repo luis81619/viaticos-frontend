@@ -3,6 +3,7 @@ import {
   ChangeDetectionStrategy,
   Component,
   TemplateRef,
+  computed,
   input,
   signal,
   viewChild,
@@ -20,6 +21,8 @@ import {
 } from '../interfaces/comision.interfaces';
 import { ResumenViaticosComponent } from '../resumen-viaticos/resumen-viaticos';
 
+const COLUMNAS_MONTO = ['hospedaje', 'alimentos', 'peaje'];
+
 // Vista de sólo lectura de una comisión: la usan el Resumen del wizard y "Ver detalles".
 @Component({
   selector: 'app-comision-detalle-vista',
@@ -35,10 +38,17 @@ export class ComisionDetalleVista implements AfterViewInit {
   readonly fechasTemplate = viewChild.required<TemplateRef<unknown>>('fechasTemplate');
   readonly monedaTemplate = viewChild.required<TemplateRef<unknown>>('monedaTemplate');
 
-  readonly columns = signal<TableColumn<DetalleDestinoVista>[]>([]);
+  private readonly columnasBase = signal<TableColumn<DetalleDestinoVista>[]>([]);
+
+  // Sin viáticos no se muestran las columnas de dinero.
+  readonly columns = computed(() =>
+    this.detalle().conViaticos
+      ? this.columnasBase()
+      : this.columnasBase().filter((c) => !COLUMNAS_MONTO.includes(c.key as string)),
+  );
 
   ngAfterViewInit(): void {
-    this.columns.set([
+    this.columnasBase.set([
       { key: 'lugar', title: 'Lugar', template: this.lugarTemplate() },
       { key: 'fechaDesde', title: 'Fechas', template: this.fechasTemplate() },
       { key: 'nivel', title: 'Nivel de aplicación' },

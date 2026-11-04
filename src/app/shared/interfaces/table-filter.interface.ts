@@ -8,4 +8,7 @@ export interface TableFilter {
 
   options?: SelectOption[];
 
+  // Valor seleccionado del select, para cuando el filtro también se cambia desde fuera de la tabla.
+  value?: string | number;
+
 }

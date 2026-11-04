@@ -13,12 +13,14 @@ import {
   viewChild,
 } from '@angular/core';
 import { CurrencyPipe, DatePipe } from '@angular/common';
-import { FormBuilder, FormControl, Validators } from '@angular/forms';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { FormBuilder, Validators } from '@angular/forms';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
+import { Subject, catchError, finalize, of, switchMap, tap } from 'rxjs';
 
 import {
   CheckIcon,
   LucideAngularModule,
+  PencilIcon,
   PlusIcon,
   XIcon,
 } from 'lucide-angular';
@@ -26,6 +28,7 @@ import {
 import { UiBadge } from '../../../../shared/components/ui-badge/ui-badge';
 import { UiButton } from '../../../../shared/components/ui-button/ui-button';
 import { UiDataTable } from '../../../../shared/components/ui-data-table/ui-data-table';
+import { UiFormAutocompleteInput } from '../../../../shared/components/ui-form-autocomplete-input/ui-form-autocomplete-input';
 import { UiFormRadioGroup } from '../../../../shared/components/ui-form-radio-group/ui-form-radio-group';
 import { UiFormSelectInput } from '../../../../shared/components/ui-form-select-input/ui-form-select-input';
 import { UiFormTextInput } from '../../../../shared/components/ui-form-text-input/ui-form-text-input';
@@ -36,32 +39,32 @@ import { TableActionEvent } from '../../../../shared/interfaces/table-action-eve
 import { TableColumn } from '../../../../shared/interfaces/table-column.interface';
 import { AlertService } from '../../../../shared/services/alert.service';
 
-import { Estado } from '../../../catalogos/municipios/interfaces/estado.interface';
 import { Municipio } from '../../../catalogos/municipios/interfaces/municipio.interfaces';
-import { EstadoService } from '../../../catalogos/municipios/services/estados.service';
 import { MunicipioService } from '../../../catalogos/municipios/services/municipios.service';
 import { TabuladorService } from '../../../catalogos/tabulador/services/tabulador.service';
-import { Vehiculo } from '../../../catalogos/vehiculos/interfaces/vehiculo.interfaces';
+import {
+  Vehiculo,
+  VehiculoFormSubmitEvent,
+} from '../../../catalogos/vehiculos/interfaces/vehiculo.interfaces';
 import { VehiculoService } from '../../../catalogos/vehiculos/services/vehiculos.service';
-import { VEHICULO_CLASE_OPTIONS } from '../../../catalogos/vehiculos/enums/vehiculo-clase.enum';
+import { VehiculoFormModal } from '../../../catalogos/vehiculos/vehiculos-page/vehiculo-form-modal/vehiculo-form-modal';
 import {
   TIPO_TRANSPORTE_OPTIONS,
   VehiculoTipo,
 } from '../../../catalogos/vehiculos/enums/vehiculo-tipo.enum';
 
-import { CalcularDestinoQuery, DestinoCaptura } from '../interfaces/comision.interfaces';
-import { ResumenViaticosComponent } from '../resumen-viaticos/resumen-viaticos';
-import { describirVehiculo } from '../utils/comision.utils';
 import {
-  ComisionWizardStore,
-  DatosVisualesDestino,
-  NUEVO_VEHICULO_PARTICULAR,
-} from '../store/comision-wizard.store';
+  CalcularDestinoQuery,
+  DestinoCaptura,
+  MunicipioElegido,
+} from '../interfaces/comision.interfaces';
+import { ResumenViaticosComponent } from '../resumen-viaticos/resumen-viaticos';
+import { aMunicipioElegido, describirMunicipio, describirVehiculo } from '../utils/comision.utils';
+import { ComisionWizardStore, DatosVisualesDestino } from '../store/comision-wizard.store';
 
 function crearFormularioDestino(fb: FormBuilder) {
   return fb.nonNullable.group({
-    estadoId: fb.nonNullable.control('', [Validators.required]),
-    municipioId: fb.nonNullable.control('', [Validators.required]),
+    municipio: fb.control<MunicipioElegido | null>(null, [Validators.required]),
     fechaDesde: fb.nonNullable.control('', [Validators.required]),
     fechaHasta: fb.nonNullable.control('', [Validators.required]),
     nivelAplicacionId: fb.nonNullable.control('', [Validators.required]),
@@ -70,6 +73,8 @@ function crearFormularioDestino(fb: FormBuilder) {
 }
 
 type FormularioDestino = ReturnType<typeof crearFormularioDestino>;
+
+const COLUMNAS_MONTO = ['hospedaje', 'alimentos', 'peaje'];
 
 @Component({
   selector: 'app-paso-origen-destino',
@@ -81,17 +86,18 @@ type FormularioDestino = ReturnType<typeof crearFormularioDestino>;
     UiBadge,
     UiButton,
     UiDataTable,
+    UiFormAutocompleteInput,
     UiFormRadioGroup,
     UiFormSelectInput,
     UiFormTextInput,
     UiLoadingOverlay,
+    VehiculoFormModal,
   ],
   templateUrl: './paso-origen-destino.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PasoOrigenDestino implements OnInit, AfterViewInit, OnDestroy {
   readonly store = inject(ComisionWizardStore);
-  private readonly estadoService = inject(EstadoService);
   private readonly municipioService = inject(MunicipioService);
   private readonly tabuladorService = inject(TabuladorService);
   private readonly vehiculoService = inject(VehiculoService);
@@ -102,25 +108,32 @@ export class PasoOrigenDestino implements OnInit, AfterViewInit, OnDestroy {
   readonly PlusIcon = PlusIcon;
   readonly XIcon = XIcon;
   readonly CheckIcon = CheckIcon;
+  readonly PencilIcon = PencilIcon;
 
   readonly origenForm = this.store.origen;
   readonly autorizacionForm = this.store.autorizacion;
   readonly vehiculoForm = this.store.vehiculo;
-  readonly particularForm = this.store.vehiculo.controls.particular;
 
   readonly VehiculoTipo = VehiculoTipo;
   readonly tipoTransporteOptions = TIPO_TRANSPORTE_OPTIONS;
-  readonly claseOptions = VEHICULO_CLASE_OPTIONS;
 
   private readonly oficiales = signal<Vehiculo[]>([]);
   private readonly particulares = signal<Vehiculo[]>([]);
 
   readonly oficialOptions = computed(() => this.oficiales().map((v) => this.aOpcionVehiculo(v)));
+  readonly particularOptions = computed(() => this.particulares().map((v) => this.aOpcionVehiculo(v)));
 
-  readonly particularOptions = computed(() => [
-    ...this.particulares().map((v) => this.aOpcionVehiculo(v)),
-    { label: '+ REGISTRAR OTRO VEHÍCULO', value: NUEVO_VEHICULO_PARTICULAR },
-  ]);
+  // Particulares: se registran o editan en el catálogo de vehículos con el mismo modal del catálogo.
+  private readonly particularId = toSignal(this.vehiculoForm.controls.particularId.valueChanges, {
+    initialValue: this.vehiculoForm.controls.particularId.value,
+  });
+  readonly particularSeleccionado = computed(
+    () => this.particulares().find((v) => v.id === this.particularId()) ?? null,
+  );
+  readonly modalParticularAbierto = signal(false);
+  // null = registrar uno nuevo; con vehículo = editar ése.
+  readonly particularEnEdicion = signal<Vehiculo | null>(null);
+  readonly guardandoParticular = signal(false);
 
   // Mismo formulario para "Nuevo destino" y para editar un destino de la tabla.
   readonly destinoForm = crearFormularioDestino(this.fb);
@@ -129,16 +142,30 @@ export class PasoOrigenDestino implements OnInit, AfterViewInit, OnDestroy {
   readonly mostrarFormularioDestino = signal(false);
   readonly editandoId = signal<string | null>(null);
 
-  private readonly estados = signal<Estado[]>([]);
-  private readonly municipiosOrigen = signal<Municipio[]>([]);
-  private readonly municipiosDestino = signal<Municipio[]>([]);
-  private readonly municipiosEdicion = signal<Municipio[]>([]);
+  // Origen: se muestra como texto (por defecto Morelia) y sólo al "Modificar" aparece el buscador.
+  // La señal guarda el último origen elegido; mientras se escribe en el buscador no cambia.
+  readonly origenElegido = toSignal(this.origenForm.controls.municipio.valueChanges, {
+    initialValue: this.origenForm.controls.municipio.value,
+  });
+  readonly modificandoOrigen = signal(false);
+  readonly mostrarBuscadorOrigen = computed(() => this.modificandoOrigen() || !this.origenElegido());
+
+  // Un solo buscador de municipios a la vez (origen, nuevo destino o edición): comparten sugerencias.
+  private readonly busquedaMunicipio = new Subject<string>();
+  private readonly sugerencias = signal<Municipio[]>([]);
+  readonly buscandoMunicipios = signal(false);
+
+  readonly municipioOptions = computed<SelectOption<MunicipioElegido>[]>(() =>
+    this.sugerencias().map((m) => {
+      const elegido = aMunicipioElegido(m);
+      return { label: describirMunicipio(elegido), value: elegido };
+    }),
+  );
+
+  readonly describirMunicipio = describirMunicipio;
+
   private readonly niveles = signal<{ id: string; nombre: string }[]>([]);
 
-  readonly estadoOptions = computed(() => this.aOpciones(this.estados()));
-  readonly municipioOrigenOptions = computed(() => this.aOpciones(this.municipiosOrigen()));
-  readonly municipioDestinoOptions = computed(() => this.aOpciones(this.municipiosDestino()));
-  readonly municipioEdicionOptions = computed(() => this.aOpciones(this.municipiosEdicion()));
   readonly nivelOptions = computed(() => this.aOpciones(this.niveles()));
 
   readonly destinoTemplate = viewChild.required<TemplateRef<unknown>>('destinoTemplate');
@@ -151,12 +178,14 @@ export class PasoOrigenDestino implements OnInit, AfterViewInit, OnDestroy {
   private readonly columnaEdicion = signal<TableColumn<DestinoCaptura> | null>(null);
 
   // Mientras se edita, el menú ⋮ se oculta y su lugar lo toma una columna con botones Guardar / Cancelar.
+  // Sin viáticos no se muestran las columnas de dinero.
   readonly columns = computed<TableColumn<DestinoCaptura>[]>(() => {
     const columnaEdicion = this.columnaEdicion();
+    const base = this.store.conViaticos()
+      ? this.columnasBase()
+      : this.columnasBase().filter((c) => !COLUMNAS_MONTO.includes(c.key as string));
 
-    return this.editandoId() && columnaEdicion
-      ? [...this.columnasBase(), columnaEdicion]
-      : this.columnasBase();
+    return this.editandoId() && columnaEdicion ? [...base, columnaEdicion] : base;
   });
 
   readonly actions = computed<TableAction<any>[]>(() =>
@@ -170,42 +199,26 @@ export class PasoOrigenDestino implements OnInit, AfterViewInit, OnDestroy {
 
   ngOnInit(): void {
     this.store.cargarResponsable();
+    this.store.cargarOrigenPredeterminado();
     this.cargarCatalogos();
 
-    this.enlazarEstadoConMunicipios(
-      this.origenForm.controls.estadoId,
-      this.origenForm.controls.municipioId,
-      this.municipiosOrigen,
-    );
-    this.enlazarEstadoConMunicipios(
-      this.destinoForm.controls.estadoId,
-      this.destinoForm.controls.municipioId,
-      this.municipiosDestino,
-    );
-    this.enlazarEstadoConMunicipios(
-      this.edicionForm.controls.estadoId,
-      this.edicionForm.controls.municipioId,
-      this.municipiosEdicion,
-    );
-
-    // Al elegir un particular se llenan sus datos para poder editarlos; "nuevo" deja el formulario vacío.
-    this.vehiculoForm.controls.particularId.valueChanges
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe((particularId) => {
-        const vehiculo = this.particulares().find((v) => v.id === particularId);
-
-        this.particularForm.reset(
-          vehiculo
-            ? {
-                clase: vehiculo.clase,
-                marca: vehiculo.marca,
-                submarca: vehiculo.submarca,
-                modelo: vehiculo.modelo,
-                color: vehiculo.color,
-                placa: vehiculo.placa,
-              }
-            : {},
-        );
+    // switchMap: si se sigue escribiendo, la respuesta de una búsqueda vieja se descarta.
+    this.busquedaMunicipio
+      .pipe(
+        tap(() => this.buscandoMunicipios.set(true)),
+        switchMap((nombre) =>
+          this.municipioService.getAll({ nombre, limit: 15 }).pipe(
+            catchError((error) => {
+              console.error('Error al buscar municipios:', error);
+              return of(null);
+            }),
+          ),
+        ),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe((response) => {
+        this.sugerencias.set(response?.data ?? []);
+        this.buscandoMunicipios.set(false);
       });
   }
 
@@ -230,15 +243,99 @@ export class PasoOrigenDestino implements OnInit, AfterViewInit, OnDestroy {
 
   // El resumen sólo tiene los ids; al salir del paso se guardan los nombres de lo elegido.
   ngOnDestroy(): void {
-    const origen = this.origenForm.getRawValue();
-    const vehiculoOficialId = this.vehiculoForm.controls.vehiculoOficialId.value;
+    const origen = this.origenForm.controls.municipio.value;
+    const { tipoTransporte, vehiculoOficialId, particularId } = this.vehiculoForm.getRawValue();
+    const [opciones, vehiculoId] =
+      tipoTransporte === VehiculoTipo.OFICIAL
+        ? [this.oficialOptions(), vehiculoOficialId]
+        : [this.particularOptions(), particularId];
 
     this.store.registrarNombres({
-      estadoOrigen: this.nombreDe(this.estados(), origen.estadoId),
-      municipioOrigen: this.nombreDe(this.municipiosOrigen(), origen.municipioId),
-      vehiculoOficial:
-        this.oficialOptions().find((opcion) => opcion.value === vehiculoOficialId)?.label ?? '',
+      estadoOrigen: origen?.estadoNombre ?? '',
+      municipioOrigen: origen?.nombre ?? '',
+      vehiculo: opciones.find((opcion) => opcion.value === vehiculoId)?.label ?? '',
     });
+  }
+
+  registrarParticular(): void {
+    this.particularEnEdicion.set(null);
+    this.modalParticularAbierto.set(true);
+  }
+
+  editarParticular(): void {
+    this.particularEnEdicion.set(this.particularSeleccionado());
+    this.modalParticularAbierto.set(true);
+  }
+
+  cerrarModalParticular(): void {
+    this.modalParticularAbierto.set(false);
+    this.particularEnEdicion.set(null);
+  }
+
+  // Se guarda en el catálogo de vehículos y queda elegido para la comisión.
+  async guardarParticular(evento: VehiculoFormSubmitEvent): Promise<void> {
+    const placa = evento.request.placa;
+    const result = await this.alertService.confirm(
+      evento.mode === 'create' ? '¿Registrar vehículo?' : '¿Guardar cambios del vehículo?',
+      evento.mode === 'create'
+        ? `Se agregará el vehículo con placa ${placa} al catálogo de vehículos particulares y quedará elegido para esta comisión. ¿Deseas continuar?`
+        : `La información del vehículo con placa ${placa} se modificará en el catálogo de vehículos; el cambio también se verá en otras comisiones que lo usen. ¿Deseas continuar?`,
+      evento.mode === 'create' ? 'Registrar' : 'Guardar cambios',
+    );
+
+    if (!result.isConfirmed) return;
+
+    this.guardandoParticular.set(true);
+
+    (evento.mode === 'create'
+      ? this.vehiculoService.create(evento.request)
+      : this.vehiculoService.update(evento.id, evento.request)
+    )
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        finalize(() => this.guardandoParticular.set(false)),
+      )
+      .subscribe({
+        next: (response) => {
+          const guardado = response.data;
+
+          this.particulares.update((lista) =>
+            evento.mode === 'create'
+              ? [...lista, guardado]
+              : lista.map((v) => (v.id === guardado.id ? guardado : v)),
+          );
+          this.vehiculoForm.controls.particularId.setValue(guardado.id);
+          this.cerrarModalParticular();
+
+          this.alertService.success(
+            evento.mode === 'create' ? 'Vehículo registrado' : 'Vehículo actualizado',
+            `${describirVehiculo(guardado)} quedó elegido para esta comisión.`,
+          );
+        },
+        error: (error) => {
+          console.error('Error al guardar el vehículo particular:', error);
+          this.alertService.handleHttpError(error);
+        },
+      });
+  }
+
+  buscarMunicipios(nombre: string): void {
+    this.busquedaMunicipio.next(nombre);
+  }
+
+  modificarOrigen(): void {
+    this.modificandoOrigen.set(true);
+  }
+
+  // Al elegir un municipio nuevo el origen vuelve a mostrarse como texto.
+  terminarModificarOrigen(): void {
+    this.modificandoOrigen.set(false);
+  }
+
+  // Si se escribió sin elegir, se regresa al origen que había.
+  cancelarModificarOrigen(): void {
+    this.origenForm.controls.municipio.setValue(this.origenElegido());
+    this.modificandoOrigen.set(false);
   }
 
   abrirFormularioDestino(): void {
@@ -247,12 +344,11 @@ export class PasoOrigenDestino implements OnInit, AfterViewInit, OnDestroy {
 
   cerrarFormularioDestino(): void {
     this.destinoForm.reset();
-    this.municipiosDestino.set([]);
     this.mostrarFormularioDestino.set(false);
   }
 
   async agregarDestino(): Promise<void> {
-    const destino = this.leerDestino(this.destinoForm, this.municipiosDestino());
+    const destino = this.leerDestino(this.destinoForm);
     if (!destino) return;
 
     const result = await this.alertService.confirm(
@@ -280,25 +376,24 @@ export class PasoOrigenDestino implements OnInit, AfterViewInit, OnDestroy {
   }
 
   private iniciarEdicion(row: DestinoCaptura): void {
-    // Sin emitir eventos: el municipio del destino no debe borrarse al cargar su estado.
-    this.edicionForm.reset(
-      {
+    this.edicionForm.reset({
+      municipio: {
+        id: row.municipioId,
+        nombre: row.municipioNombre,
         estadoId: row.estadoId,
-        municipioId: row.municipioId,
-        fechaDesde: row.fechaDesde,
-        fechaHasta: row.fechaHasta,
-        nivelAplicacionId: row.nivelAplicacionId,
-        descripcion: row.descripcion,
+        estadoNombre: row.estadoNombre,
       },
-      { emitEvent: false },
-    );
+      fechaDesde: row.fechaDesde,
+      fechaHasta: row.fechaHasta,
+      nivelAplicacionId: row.nivelAplicacionId,
+      descripcion: row.descripcion,
+    });
 
-    this.cargarMunicipios(row.estadoId, this.municipiosEdicion);
     this.editandoId.set(row.id);
   }
 
   async guardarEdicion(row: DestinoCaptura): Promise<void> {
-    const destino = this.leerDestino(this.edicionForm, this.municipiosEdicion());
+    const destino = this.leerDestino(this.edicionForm);
     if (!destino) return;
 
     const result = await this.alertService.confirm(
@@ -315,7 +410,6 @@ export class PasoOrigenDestino implements OnInit, AfterViewInit, OnDestroy {
   cancelarEdicion(): void {
     this.editandoId.set(null);
     this.edicionForm.reset();
-    this.municipiosEdicion.set([]);
   }
 
   private async eliminarDestino(row: DestinoCaptura): Promise<void> {
@@ -333,18 +427,18 @@ export class PasoOrigenDestino implements OnInit, AfterViewInit, OnDestroy {
   // Valida el formulario de un destino y arma lo que necesita el store; null si no es válido.
   private leerDestino(
     form: FormularioDestino,
-    municipios: Municipio[],
   ): { query: CalcularDestinoQuery; datos: DatosVisualesDestino } | null {
     if (form.invalid) {
       form.markAllAsTouched();
       this.alertService.warning(
         'Campos obligatorios',
-        'Completa estado, municipio, fechas y nivel de aplicación del destino.',
+        'Completa municipio, fechas y nivel de aplicación del destino.',
       );
       return null;
     }
 
     const valor = form.getRawValue();
+    const municipio = valor.municipio!;
 
     if (valor.fechaHasta < valor.fechaDesde) {
       this.alertService.warning(
@@ -357,46 +451,21 @@ export class PasoOrigenDestino implements OnInit, AfterViewInit, OnDestroy {
     return {
       query: {
         nivelAplicacionId: valor.nivelAplicacionId,
-        municipioId: valor.municipioId,
+        municipioId: municipio.id,
         fechaDesde: valor.fechaDesde,
         fechaHasta: valor.fechaHasta,
       },
       datos: {
-        estadoId: valor.estadoId,
-        estadoNombre: this.nombreDe(this.estados(), valor.estadoId),
-        municipioNombre: this.nombreDe(municipios, valor.municipioId),
+        estadoId: municipio.estadoId,
+        estadoNombre: municipio.estadoNombre,
+        municipioNombre: municipio.nombre,
         nivelNombre: this.nombreDe(this.niveles(), valor.nivelAplicacionId),
         descripcion: valor.descripcion.trim(),
       },
     };
   }
 
-  // Al cambiar el estado se limpia el municipio y se cargan los municipios de ese estado.
-  private enlazarEstadoConMunicipios(
-    estado: FormControl<string>,
-    municipio: FormControl<string>,
-    municipios: WritableSignal<Municipio[]>,
-  ): void {
-    estado.valueChanges
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe((estadoId) => {
-        municipio.setValue('');
-        this.cargarMunicipios(estadoId, municipios);
-      });
-  }
-
   private cargarCatalogos(): void {
-    this.estadoService
-      .getAll()
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe({
-        next: (response) => this.estados.set(response.data),
-        error: (error) => {
-          console.error('Error al obtener estados:', error);
-          this.estados.set([]);
-        },
-      });
-
     this.tabuladorService
       .listar()
       .pipe(takeUntilDestroyed(this.destroyRef))
@@ -410,33 +479,6 @@ export class PasoOrigenDestino implements OnInit, AfterViewInit, OnDestroy {
 
     this.cargarVehiculos(VehiculoTipo.OFICIAL, this.oficiales);
     this.cargarVehiculos(VehiculoTipo.PARTICULAR, this.particulares);
-
-    // Al regresar a este paso el origen ya viene elegido: recargamos sus municipios.
-    const estadoOrigen = this.origenForm.controls.estadoId.value;
-    if (estadoOrigen) {
-      this.cargarMunicipios(estadoOrigen, this.municipiosOrigen);
-    }
-  }
-
-  private cargarMunicipios(
-    estadoId: string,
-    destino: WritableSignal<Municipio[]>,
-  ): void {
-    if (!estadoId) {
-      destino.set([]);
-      return;
-    }
-
-    this.municipioService
-      .getByEstado(estadoId)
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe({
-        next: (response) => destino.set(response.data),
-        error: (error) => {
-          console.error('Error al obtener municipios:', error);
-          destino.set([]);
-        },
-      });
   }
 
   private cargarVehiculos(tipo: VehiculoTipo, destino: WritableSignal<Vehiculo[]>): void {

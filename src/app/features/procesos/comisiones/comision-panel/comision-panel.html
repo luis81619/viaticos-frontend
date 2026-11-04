@@ -1,0 +1,207 @@
+<app-ui-drawer [isOpen]="!!comisionId()" (close)="close.emit()">
+  <!-- ENCABEZADO -->
+  <div drawerHeader>
+    @if (comision(); as c) {
+      <div class="flex flex-wrap items-center gap-2">
+        <h2 class="text-lg font-semibold text-gray-800">{{ c.trabajador?.nombreCompleto }}</h2>
+        <app-ui-badge [label]="getEstadoLabel(c.estado)" [variant]="getEstadoVariant(c.estado)" />
+      </div>
+
+      <p class="mt-0.5 text-xs text-gray-500">
+        <span class="font-mono">{{ c.folio ?? 'Sin folio' }}</span>
+        · {{ c.fechaElaboracion | date: 'dd/MM/yyyy' : 'UTC' }}
+        @for (destino of c.destinos; track destino.id; let primero = $first) {
+          {{ primero ? '·' : ',' }} {{ destino.municipio?.nombre }}
+        }
+      </p>
+    } @else {
+      <h2 class="text-lg font-semibold text-gray-800">Comisión</h2>
+    }
+  </div>
+
+  <!-- CONTENIDO -->
+  @if (comision(); as c) {
+    <div class="flex flex-col gap-5">
+      @if (aviso(); as aviso) {
+        <div [class]="'rounded-lg border p-4 text-sm ' + tonoAviso()">
+          <p class="font-semibold">{{ aviso.titulo }}</p>
+          <p class="mt-1">{{ aviso.texto }}</p>
+        </div>
+      }
+
+      <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <!-- DATOS DE LA COMISIÓN -->
+        <section class="rounded-lg border border-gray-200 p-4">
+          <h3 class="mb-3 text-xs font-semibold uppercase tracking-wide text-gray-700">Comisión</h3>
+
+          <dl class="flex flex-col gap-2 text-sm">
+            <div>
+              <dt class="text-xs text-gray-500">Comisionado</dt>
+              <dd class="text-gray-800">
+                {{ c.trabajador?.numeroTrabajador }} {{ c.trabajador?.nombreCompleto }}
+                @if (c.nivelAplicacion) {
+                  · {{ c.nivelAplicacion.nombre }}
+                }
+              </dd>
+            </div>
+
+            <div>
+              <dt class="text-xs text-gray-500">Dirección</dt>
+              <dd class="text-gray-800">{{ describirDireccion(c.direccion) }}</dd>
+            </div>
+
+            <div>
+              <dt class="text-xs text-gray-500">Actividad del POA</dt>
+              <dd class="text-gray-800">{{ describirActividad(c.actividad) }}</dd>
+            </div>
+
+            <div>
+              <dt class="text-xs text-gray-500">La autoriza</dt>
+              <dd class="text-gray-800">
+                {{ c.autoriza ?? '—' }}
+                @if (c.puestoAutoriza) {
+                  · {{ c.puestoAutoriza }}
+                }
+              </dd>
+            </div>
+
+            <div>
+              <dt class="text-xs text-gray-500">Objetivo</dt>
+              <dd class="text-gray-800">{{ c.objetivo ?? '—' }}</dd>
+            </div>
+
+            <div>
+              <dt class="text-xs text-gray-500">Sale de</dt>
+              <dd class="text-gray-800">
+                {{ c.municipioOrigen?.nombre }}{{ c.municipioOrigen?.estado ? ', ' + c.municipioOrigen?.estado : '' }}
+              </dd>
+            </div>
+
+            <div>
+              <dt class="text-xs text-gray-500">Transporte</dt>
+              <dd class="text-gray-800">{{ transporte() || '—' }}</dd>
+            </div>
+          </dl>
+        </section>
+
+        <!-- ITINERARIO E IMPORTES -->
+        <section class="rounded-lg border border-gray-200 p-4">
+          <h3 class="mb-3 text-xs font-semibold uppercase tracking-wide text-gray-700">
+            {{ c.conViaticos ? 'Itinerario e importes' : 'Itinerario' }}
+          </h3>
+
+          <div class="flex flex-col gap-3 text-sm">
+            @for (destino of c.destinos; track destino.id) {
+              <div class="border-b border-gray-100 pb-3">
+                <p class="font-semibold text-gray-800">
+                  {{ destino.municipio?.nombre }}{{ destino.municipio?.estado ? ', ' + destino.municipio?.estado : '' }}
+                </p>
+                <p class="text-xs text-gray-500">
+                  {{ destino.fechaDesde | date: 'dd/MM/yyyy' : 'UTC' }}
+                  – {{ destino.fechaHasta | date: 'dd/MM/yyyy' : 'UTC' }}
+                  · {{ destino.diasComision }} {{ destino.diasComision === 1 ? 'día' : 'días' }}
+                </p>
+
+                @if (c.conViaticos) {
+                  <dl class="mt-2 flex flex-col gap-1">
+                    <div class="flex justify-between gap-2">
+                      <dt class="text-gray-600">Hospedaje</dt>
+                      <dd class="font-mono text-gray-800">{{ destino.hospedaje | currency: 'MXN' : 'symbol-narrow' }}</dd>
+                    </div>
+                    <div class="flex justify-between gap-2">
+                      <dt class="text-gray-600">Alimentos</dt>
+                      <dd class="font-mono text-gray-800">{{ destino.alimentos | currency: 'MXN' : 'symbol-narrow' }}</dd>
+                    </div>
+                    <div class="flex justify-between gap-2">
+                      <dt class="text-gray-600">Peaje</dt>
+                      <dd class="font-mono text-gray-800">{{ destino.peaje | currency: 'MXN' : 'symbol-narrow' }}</dd>
+                    </div>
+                  </dl>
+                }
+              </div>
+            }
+
+            @if (c.conViaticos) {
+              <div class="flex justify-between gap-2 font-semibold text-gray-800">
+                <span>Total</span>
+                <span class="font-mono">{{ c.totalViaticos | currency: 'MXN' : 'symbol-narrow' }}</span>
+              </div>
+
+              @if (c.destinos.length > 1) {
+                <p class="text-xs text-gray-500">
+                  Con varios destinos solo se paga el último; los anteriores forman parte de la ruta.
+                </p>
+              }
+            } @else {
+              <p class="text-sm font-semibold text-gray-700">Sin viáticos</p>
+            }
+          </div>
+        </section>
+      </div>
+
+      <!-- HISTORIAL -->
+      <section>
+        <h3 class="mb-3 text-xs font-semibold uppercase tracking-wide text-gray-700">Historial</h3>
+        <app-comision-historial [revisiones]="c.revisiones" />
+      </section>
+    </div>
+  } @else if (cargando()) {
+    <p class="text-sm text-gray-500">Cargando comisión...</p>
+  } @else {
+    <p class="text-sm text-gray-500">No fue posible cargar la comisión.</p>
+  }
+
+  <!-- BOTONES -->
+  <div drawerFooter class="flex flex-wrap items-center justify-between gap-2">
+    @if (borradorPropio()) {
+      <!-- BORRADOR: se elimina, se sigue editando o se envía -->
+      <app-ui-button variant="danger" [disabled]="procesando()" (click)="eliminarBorrador()">
+        <lucide-icon [img]="Trash2Icon" class="mr-1 h-4 w-4" />
+        Eliminar borrador
+      </app-ui-button>
+
+      <div class="flex gap-2">
+        <app-ui-button variant="secondary" [disabled]="procesando()" (click)="editar()">
+          <lucide-icon [img]="PencilIcon" class="mr-1 h-4 w-4" />
+          Editar
+        </app-ui-button>
+
+        <app-ui-button
+          variant="primary"
+          [disabled]="procesando() || (comision()?.faltantes?.length ?? 0) > 0"
+          (click)="enviarBorrador()"
+        >
+          <lucide-icon [img]="SendIcon" class="mr-1 h-4 w-4" />
+          Enviar a autorización
+        </app-ui-button>
+      </div>
+    } @else {
+      <div>
+        @if (comision()?.puedeCancelar) {
+          <app-ui-button variant="danger" [disabled]="procesando()" (click)="cancelar()">
+            <lucide-icon [img]="BanIcon" class="mr-1 h-4 w-4" />
+            Cancelar comisión
+          </app-ui-button>
+        }
+      </div>
+
+      <div class="flex gap-2">
+        @if (correccionPropia()) {
+          <app-ui-button variant="primary" (click)="editar()">
+            <lucide-icon [img]="PencilIcon" class="mr-1 h-4 w-4" />
+            Editar
+          </app-ui-button>
+        }
+
+        @if (comision()) {
+          <app-ui-button variant="secondary" (click)="verDetalles()">
+            <lucide-icon [img]="ExternalLinkIcon" class="mr-1 h-4 w-4" />
+            Ver detalles
+          </app-ui-button>
+        }
+
+        <app-ui-button variant="secondary" (click)="close.emit()">Cerrar</app-ui-button>
+      </div>
+    }
+  </div>
+</app-ui-drawer>

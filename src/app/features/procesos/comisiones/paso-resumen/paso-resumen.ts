@@ -7,8 +7,7 @@ import {
 
 import { ComisionDetalleVista } from '../comision-detalle-vista/comision-detalle-vista';
 import { DetalleComisionVista } from '../interfaces/comision.interfaces';
-import { ComisionWizardStore, NUEVO_VEHICULO_PARTICULAR } from '../store/comision-wizard.store';
-import { describirVehiculo } from '../utils/comision.utils';
+import { ComisionWizardStore } from '../store/comision-wizard.store';
 
 @Component({
   selector: 'app-paso-resumen',
@@ -29,6 +28,7 @@ export class PasoResumen {
     const { tipoTransporte } = this.store.vehiculo.getRawValue();
 
     return {
+      conViaticos: this.store.conViaticos(),
       trabajador: `${this.store.trabajador()?.numeroTrabajador ?? ''} ${generales.nombre}`.trim(),
       direccion: nombres.direccion,
       actividad: nombres.actividad,
@@ -55,20 +55,12 @@ export class PasoResumen {
     };
   }
 
+  // Autobús u otro no llevan vehículo.
   private describirVehiculoElegido(): string {
-    const { tipoTransporte, particularId, particular } = this.store.vehiculo.getRawValue();
+    const { tipoTransporte } = this.store.vehiculo.getRawValue();
+    const llevaVehiculo =
+      tipoTransporte === VehiculoTipo.OFICIAL || tipoTransporte === VehiculoTipo.PARTICULAR;
 
-    if (tipoTransporte === VehiculoTipo.OFICIAL) {
-      return this.store.nombres().vehiculoOficial;
-    }
-
-    if (tipoTransporte === VehiculoTipo.PARTICULAR) {
-      const descripcion = describirVehiculo(particular);
-      return particularId === NUEVO_VEHICULO_PARTICULAR
-        ? `${descripcion} (nuevo registro)`
-        : descripcion;
-    }
-
-    return '';
+    return llevaVehiculo ? this.store.nombres().vehiculo : '';
   }
 }

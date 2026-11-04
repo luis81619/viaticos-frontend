@@ -14,6 +14,12 @@
     </app-ui-button>
   </header>
 
+  <app-ui-filter-chips
+    [options]="chipsEstado()"
+    [selected]="store.estadoSeleccionado()"
+    (selectedChange)="onEstadoChange($event)"
+  />
+
   <div class="rounded-xl bg-white p-5 shadow-sm">
     <app-ui-pagination
       [totalItems]="store.totalRecords()"
@@ -28,6 +34,9 @@
       [data]="store.comisiones()"
       [actions]="actions"
       [loading]="store.isLoading()"
+      [selectable]="true"
+      [selectedId]="comisionSeleccionada()"
+      (rowClick)="comisionSeleccionada.set($event.id)"
       (actionClick)="onAction($event)"
       (filterChange)="onFilterChange($event)"
     />
@@ -40,6 +49,12 @@
       (pageSizeChange)="onPageSizeChange($event)"
     />
   </div>
+
+  <app-comision-panel
+    [comisionId]="comisionSeleccionada()"
+    (close)="comisionSeleccionada.set(null)"
+    (cambio)="recargar()"
+  />
 </section>
 
 <ng-template #direccionTemplate let-row>
@@ -56,8 +71,12 @@
   }
 </ng-template>
 
-<ng-template #totalTemplate let-value="value">
-  {{ value | currency: 'MXN' : 'symbol-narrow' }}
+<ng-template #totalTemplate let-row>
+  @if (row.conViaticos) {
+    {{ row.totalViaticos | currency: 'MXN' : 'symbol-narrow' }}
+  } @else {
+    <span class="text-xs text-gray-500">Sin viáticos</span>
+  }
 </ng-template>
 
 <ng-template #fechaTemplate let-value="value">

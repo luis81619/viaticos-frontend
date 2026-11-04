@@ -11,12 +11,14 @@
     class="flex flex-col gap-4"
   >
     <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
-      <app-ui-form-select-input
-        label="Tipo de vehículo"
-        placeholder="Seleccione un tipo"
-        [control]="form.controls.tipo"
-        [options]="tipoOptions"
-      />
+      @if (!tipoFijo()) {
+        <app-ui-form-select-input
+          label="Tipo de vehículo"
+          placeholder="Seleccione un tipo"
+          [control]="form.controls.tipo"
+          [options]="tipoOptions"
+        />
+      }
 
       <app-ui-form-select-input
         label="Clase"
@@ -61,22 +63,6 @@
       placeholder="EJ. ABC-1234"
       [control]="form.controls.placa"
     />
-
-    <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
-      <app-ui-form-text-input
-        label="Km inicial"
-        type="number"
-        [uppercase]="false"
-        [control]="form.controls.kmInicial"
-      />
-
-      <app-ui-form-text-input
-        label="Km final"
-        type="number"
-        [uppercase]="false"
-        [control]="form.controls.kmFinal"
-      />
-    </div>
 
     <app-ui-form-footer
       [submitLabel]="vehiculo() ? 'ACTUALIZAR' : 'GUARDAR'"

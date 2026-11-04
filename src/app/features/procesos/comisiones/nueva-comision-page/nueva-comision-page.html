@@ -2,80 +2,167 @@
   <!-- ENCABEZADO -->
   <header class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
     <div>
-      <h1 class="text-2xl font-semibold text-orange-500">Nueva comisión</h1>
+      <div class="flex items-center gap-2">
+        <h1 class="text-2xl font-semibold text-orange-500">{{ titulo() }}</h1>
+
+        @if (store.enCorreccion()) {
+          <app-ui-badge label="CORRECCIÓN" variant="warning" />
+        } @else if (store.comisionId()) {
+          <app-ui-badge label="BORRADOR" variant="neutral" />
+        }
+      </div>
 
       <p class="mt-1 text-sm text-gray-600">
-        Captura los datos de la comisión en tres pasos.
+        @if (store.enCorreccion()) {
+          Corrige lo que pidió la dirección y reenvía la comisión a autorización.
+        } @else {
+          Captura los datos de la comisión en tres pasos. Si aún no tienes todo, guárdala como borrador.
+        }
       </p>
     </div>
 
-    <app-ui-button variant="danger" (click)="cancelar()">
-      Cancelar
-    </app-ui-button>
+    <div class="flex flex-wrap gap-2">
+      <app-ui-button
+        variant="secondary"
+        [disabled]="store.enviando() || store.cargandoComision()"
+        (click)="guardarBorrador()"
+      >
+        <lucide-icon [img]="SaveIcon" class="mr-1 h-4 w-4" />
+        {{ store.enCorreccion() ? 'Guardar cambios' : 'Guardar borrador' }}
+      </app-ui-button>
+
+      <app-ui-button variant="danger" (click)="cancelar()">
+        Cancelar
+      </app-ui-button>
+    </div>
   </header>
 
-  <div class="rounded-xl bg-white p-6 shadow-sm">
-    <!-- PASOS -->
-    <ol class="grid grid-cols-3 gap-4">
-      @for (paso of pasos; track paso.numero) {
-        <li class="flex flex-col items-center gap-2 text-center">
+  <!-- LO QUE PIDIÓ CORREGIR EL DIRECTOR -->
+  @if (store.enCorreccion()) {
+    <div class="rounded-lg border border-orange-300 bg-orange-50 p-4 text-sm text-orange-800">
+      <p class="font-semibold">Devuelta para corrección</p>
+      <p class="mt-1 whitespace-pre-line">
+        {{ store.observacionesCorreccion() ?? 'La dirección pidió corregir la comisión.' }}
+      </p>
+    </div>
+  }
+
+  <!-- TIPO DE COMISIÓN -->
+  <div class="rounded-md border border-gray-200 bg-white px-4 py-3 shadow-sm">
+    <app-ui-form-radio-group
+      label="Tipo de comisión"
+      [control]="store.conViaticosControl"
+      [options]="tipoComisionOptions"
+    />
+
+    @if (!store.conViaticos()) {
+      <p class="mt-2 text-xs text-gray-500">
+        Sin viáticos: la comisión se registra y se autoriza igual, pero no lleva montos.
+      </p>
+    }
+  </div>
+
+  <!-- PASOS EN LISTA: se abre uno a la vez. Al pasar con "Listo" queda con palomita si está completo
+       o con "!" si le faltan datos (se puede seguir y guardar como borrador; para enviar se exige todo).
+       Al editar una comisión no se muestran hasta tenerla cargada, para que cada paso arranque con sus datos. -->
+  @if (!store.cargandoComision()) {
+  <ol class="flex flex-col gap-3">
+    @for (paso of pasos; track paso.numero) {
+      @let abierto = store.paso() === paso.numero;
+      @let completado = store.completados().has(paso.numero);
+      @let incompleto = store.revisados().has(paso.numero) && !completado;
+
+      <li
+        class="rounded-md border bg-white shadow-sm"
+        [class.border-green-600]="abierto"
+        [class.border-gray-200]="!abierto"
+      >
+        <!-- CABECERA DEL PASO -->
+        <div class="flex items-center gap-3 px-4 py-3">
           <span
-            class="flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold text-white"
-            [class.bg-blue-500]="store.paso() === paso.numero"
-            [class.bg-gray-400]="store.paso() !== paso.numero"
+            class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-semibold"
+            [class.bg-green-600]="completado"
+            [class.text-white]="completado"
+            [class.border-2]="!completado"
+            [class.bg-orange-50]="incompleto"
+            [class.border-orange-400]="!completado && (abierto || incompleto)"
+            [class.text-orange-500]="!completado && (abierto || incompleto)"
+            [class.border-gray-300]="!completado && !abierto && !incompleto"
+            [class.text-gray-400]="!completado && !abierto && !incompleto"
           >
-            {{ paso.numero }}
+            @if (completado) {
+              <lucide-icon [img]="CheckIcon" class="h-4 w-4" />
+            } @else if (incompleto) {
+              !
+            } @else {
+              {{ paso.numero }}
+            }
           </span>
 
           <span
-            class="text-xs"
-            [class.font-semibold]="store.paso() === paso.numero"
-            [class.text-blue-500]="store.paso() === paso.numero"
-            [class.text-gray-500]="store.paso() !== paso.numero"
+            class="shrink-0 text-lg font-semibold"
+            [class.text-gray-800]="abierto || completado || incompleto"
+            [class.text-gray-400]="!abierto && !completado && !incompleto"
           >
             {{ paso.titulo }}
           </span>
-        </li>
-      }
-    </ol>
 
-    <!-- CONTENIDO DEL PASO -->
-    <div class="mt-6">
-      @switch (store.paso()) {
-        @case (1) {
-          <app-paso-datos-generales />
+          @if (!abierto && (completado || incompleto)) {
+            <span class="min-w-0 flex-1 truncate text-sm text-gray-500">
+              @if (incompleto) {
+                <span class="font-semibold text-orange-600">Incompleto</span>
+                @if (resumenPaso(paso.numero)) {
+                  ·
+                }
+              }
+              {{ resumenPaso(paso.numero) }}
+            </span>
+
+            <button
+              type="button"
+              class="ml-auto shrink-0 text-sm font-semibold text-green-700 hover:underline"
+              (click)="store.abrir(paso.numero)"
+            >
+              Cambiar
+            </button>
+          }
+        </div>
+
+        <!-- CONTENIDO DEL PASO -->
+        @if (abierto) {
+          <div class="border-t border-gray-100 p-4">
+            @switch (paso.numero) {
+              @case (1) {
+                <app-paso-datos-generales />
+              }
+              @case (2) {
+                <app-paso-origen-destino />
+              }
+              @case (3) {
+                <app-paso-resumen />
+              }
+            }
+
+            <div class="mt-6 flex justify-end">
+              @if (paso.numero < 3) {
+                <app-ui-button variant="primary" (click)="store.listo()">
+                  <lucide-icon [img]="CheckIcon" class="mr-1 h-4 w-4" />
+                  Listo
+                </app-ui-button>
+              } @else {
+                <app-ui-button variant="primary" [disabled]="store.enviando()" (click)="enviar()">
+                  <lucide-icon [img]="SendIcon" class="mr-1 h-4 w-4" />
+                  {{ store.enCorreccion() ? 'Reenviar a autorización' : 'Finalizar y enviar comisión' }}
+                </app-ui-button>
+              }
+            </div>
+          </div>
         }
-        @case (2) {
-          <app-paso-origen-destino />
-        }
-        @case (3) {
-          <app-paso-resumen />
-        }
-      }
-    </div>
+      </li>
+    }
+  </ol>
+  }
 
-    <!-- NAVEGACIÓN -->
-    <div class="mt-6 flex justify-between">
-      <app-ui-button
-        variant="primary"
-        [disabled]="store.paso() === 1 || store.enviando()"
-        (click)="store.anterior()"
-      >
-        Anterior
-      </app-ui-button>
-
-      @if (store.paso() < 3) {
-        <app-ui-button variant="primary" (click)="store.siguiente()">
-          Siguiente
-        </app-ui-button>
-      } @else {
-        <app-ui-button variant="primary" [disabled]="store.enviando()" (click)="enviar()">
-          <lucide-icon [img]="SendIcon" class="mr-1 h-4 w-4" />
-          Finalizar y enviar comisión
-        </app-ui-button>
-      }
-    </div>
-  </div>
-
-  <app-ui-loading-overlay [visible]="store.enviando()" message="Enviando comisión..." />
+  <app-ui-loading-overlay [visible]="store.enviando()" message="Guardando comisión..." />
+  <app-ui-loading-overlay [visible]="store.cargandoComision()" message="Cargando comisión..." />
 </section>

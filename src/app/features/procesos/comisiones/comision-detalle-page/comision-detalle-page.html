@@ -58,11 +58,11 @@
       <app-comision-detalle-vista [detalle]="detalle()!" [resumen]="resumen()" />
     </div>
 
-    <!-- REVISIONES -->
+    <!-- HISTORIAL -->
     <div class="rounded-xl bg-white p-5 shadow-sm">
-      <h2 class="mb-4 text-base font-semibold text-green-700">Revisiones</h2>
+      <h2 class="mb-4 text-base font-semibold text-green-700">Historial</h2>
 
-      <app-ui-data-table [columns]="columnasRevisiones()" [data]="comision.revisiones" />
+      <app-comision-historial [revisiones]="comision.revisiones" />
     </div>
 
   } @else if (!isLoading()) {
@@ -74,7 +74,7 @@
     </div>
   }
 
-  <!-- REVISIÓN (sólo director, comisión Enviada) -->
+  <!-- REVISIÓN (sólo director, comisión Por autorizar) -->
   <app-ui-modal
     [isOpen]="revisionAbierta()"
     title="Revisión de la comisión"
@@ -110,11 +110,3 @@
   <app-ui-loading-overlay [visible]="isLoading()" message="Cargando comisión..." />
   <app-ui-loading-overlay [visible]="revisando()" message="Guardando revisión..." />
 </section>
-
-<ng-template #fechaTemplate let-value="value">
-  {{ value | date: 'dd/MM/yyyy HH:mm' }}
-</ng-template>
-
-<ng-template #estadoTemplate let-row>
-  <app-ui-badge [label]="getEstadoLabel(row.estado)" [variant]="getEstadoVariant(row.estado)" />
-</ng-template>

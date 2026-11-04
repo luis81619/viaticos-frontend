@@ -1,23 +1,44 @@
 <div class="space-y-6">
   <!-- ORIGEN -->
   <div class="rounded-lg border border-gray-200 p-4">
-    <h2 class="mb-4 text-base font-semibold text-green-700">Origen</h2>
+    <h2 class="mb-3 text-base font-semibold text-green-700">Origen</h2>
 
-    <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
-      <app-ui-form-select-input
-        label="Estado"
-        placeholder="Seleccione un estado"
-        [control]="origenForm.controls.estadoId"
-        [options]="estadoOptions()"
-      />
+    @if (mostrarBuscadorOrigen()) {
+      <div class="flex flex-col gap-2 md:w-1/2">
+        <app-ui-form-autocomplete-input
+          label="Municipio de origen"
+          [control]="origenForm.controls.municipio"
+          [options]="municipioOptions()"
+          [loading]="buscandoMunicipios()"
+          [displayWith]="describirMunicipio"
+          (searchChange)="buscarMunicipios($event)"
+          (optionSelected)="terminarModificarOrigen()"
+        />
 
-      <app-ui-form-select-input
-        label="Municipio"
-        [placeholder]="origenForm.controls.estadoId.value ? 'Seleccione un municipio' : 'Primero seleccione un estado'"
-        [control]="origenForm.controls.municipioId"
-        [options]="municipioOrigenOptions()"
-      />
-    </div>
+        @if (origenElegido()) {
+          <button
+            type="button"
+            class="self-start text-sm font-semibold text-gray-500 hover:underline"
+            (click)="cancelarModificarOrigen()"
+          >
+            Cancelar
+          </button>
+        }
+      </div>
+    } @else {
+      <p class="text-xs font-semibold uppercase text-gray-500">Sale de</p>
+      <p class="text-sm text-gray-800">
+        <span class="font-semibold">{{ describirMunicipio(origenElegido()) }}</span>
+        ·
+        <button
+          type="button"
+          class="font-semibold text-green-700 underline hover:text-green-800"
+          (click)="modificarOrigen()"
+        >
+          Modificar
+        </button>
+      </p>
+    }
   </div>
 
   <!-- DESTINOS -->
@@ -38,18 +59,13 @@
     @if (mostrarFormularioDestino()) {
       <div class="mb-4 rounded-lg bg-gray-50 p-4">
         <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
-          <app-ui-form-select-input
-            label="Estado"
-            placeholder="Seleccione un estado"
-            [control]="destinoForm.controls.estadoId"
-            [options]="estadoOptions()"
-          />
-
-          <app-ui-form-select-input
+          <app-ui-form-autocomplete-input
             label="Municipio"
-            [placeholder]="destinoForm.controls.estadoId.value ? 'Seleccione un municipio' : 'Primero seleccione un estado'"
-            [control]="destinoForm.controls.municipioId"
-            [options]="municipioDestinoOptions()"
+            [control]="destinoForm.controls.municipio"
+            [options]="municipioOptions()"
+            [loading]="buscandoMunicipios()"
+            [displayWith]="describirMunicipio"
+            (searchChange)="buscarMunicipios($event)"
           />
 
           <div class="grid grid-cols-2 gap-4">
@@ -98,12 +114,14 @@
     />
   </div>
 
-  <!-- VIÁTICOS -->
-  <div class="rounded-lg border border-gray-200 p-4">
-    <h2 class="mb-4 text-base font-semibold text-green-700">Viáticos</h2>
+  <!-- VIÁTICOS (sólo comisión con viáticos) -->
+  @if (store.conViaticos()) {
+    <div class="rounded-lg border border-gray-200 p-4">
+      <h2 class="mb-4 text-base font-semibold text-green-700">Viáticos</h2>
 
-    <app-resumen-viaticos [resumen]="store.resumenViaticos()" />
-  </div>
+      <app-resumen-viaticos [resumen]="store.resumenViaticos()" />
+    </div>
+  }
 
   <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
     <!-- VEHÍCULO -->
@@ -135,33 +153,20 @@
               [options]="particularOptions()"
             />
 
-            @if (vehiculoForm.controls.particularId.value) {
-              <div class="rounded-lg bg-gray-50 p-4">
-                <p class="mb-3 text-xs text-gray-500">
-                  Datos del vehículo. Puedes corregirlos; los cambios se guardan en el catálogo al
-                  enviar la comisión.
-                </p>
+            <!-- Los cambios se guardan de inmediato en el catálogo de vehículos -->
+            <div class="flex flex-wrap gap-2">
+              @if (particularSeleccionado()) {
+                <app-ui-button variant="secondary" size="sm" (click)="editarParticular()">
+                  <lucide-icon [img]="PencilIcon" class="mr-1 h-4 w-4" />
+                  Editar vehículo
+                </app-ui-button>
+              }
 
-                <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                  <app-ui-form-select-input
-                    label="Clase"
-                    placeholder="Seleccione una clase"
-                    [control]="particularForm.controls.clase"
-                    [options]="claseOptions"
-                  />
-                  <app-ui-form-text-input label="Marca" [control]="particularForm.controls.marca" />
-                  <app-ui-form-text-input label="Submarca" [control]="particularForm.controls.submarca" />
-                  <app-ui-form-text-input
-                    label="Año"
-                    type="number"
-                    [uppercase]="false"
-                    [control]="particularForm.controls.modelo"
-                  />
-                  <app-ui-form-text-input label="Color" [control]="particularForm.controls.color" />
-                  <app-ui-form-text-input label="Placa" [control]="particularForm.controls.placa" />
-                </div>
-              </div>
-            }
+              <app-ui-button variant="secondary" size="sm" (click)="registrarParticular()">
+                <lucide-icon [img]="PlusIcon" class="mr-1 h-4 w-4" />
+                Registrar otro vehículo
+              </app-ui-button>
+            </div>
           }
         }
       </div>
@@ -179,22 +184,27 @@
   </div>
 
   <app-ui-loading-overlay [visible]="store.calculandoDestino()" message="Calculando viáticos del destino..." />
+
+  <app-vehiculo-form-modal
+    [isOpen]="modalParticularAbierto()"
+    [vehiculo]="particularEnEdicion()"
+    [isSaving]="guardandoParticular()"
+    [tipoFijo]="VehiculoTipo.PARTICULAR"
+    (close)="cerrarModalParticular()"
+    (saved)="guardarParticular($event)"
+  />
 </div>
 
 <ng-template #destinoTemplate let-row>
   @if (row.id === editandoId()) {
     <div class="flex min-w-56 flex-col gap-2">
-      <app-ui-form-select-input
-        label="Estado"
-        placeholder="Seleccione un estado"
-        [control]="edicionForm.controls.estadoId"
-        [options]="estadoOptions()"
-      />
-      <app-ui-form-select-input
+      <app-ui-form-autocomplete-input
         label="Municipio"
-        placeholder="Seleccione un municipio"
-        [control]="edicionForm.controls.municipioId"
-        [options]="municipioEdicionOptions()"
+        [control]="edicionForm.controls.municipio"
+        [options]="municipioOptions()"
+        [loading]="buscandoMunicipios()"
+        [displayWith]="describirMunicipio"
+        (searchChange)="buscarMunicipios($event)"
       />
       <app-ui-form-text-input label="Descripción" [control]="edicionForm.controls.descripcion" />
     </div>
@@ -203,7 +213,7 @@
     @if (row.descripcion) {
       <p class="text-xs text-gray-500">{{ row.descripcion }}</p>
     }
-    @if (!row.conRecurso) {
+    @if (!row.conRecurso && store.conViaticos()) {
       <app-ui-badge label="Sin recurso" variant="warning" />
     }
   }

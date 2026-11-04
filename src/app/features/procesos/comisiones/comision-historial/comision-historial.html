@@ -1,0 +1,26 @@
+@if (movimientos().length > 0) {
+  <ol class="flex flex-col gap-4">
+    @for (movimiento of movimientos(); track movimiento.id) {
+      <li class="flex gap-3">
+        <span [class]="'mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full ' + movimiento.color"></span>
+
+        <div class="min-w-0 flex-1">
+          <div class="flex items-baseline justify-between gap-3">
+            <p class="text-sm font-semibold text-gray-800">{{ movimiento.titulo }}</p>
+            <span class="shrink-0 text-xs text-gray-500">
+              {{ movimiento.fecha | date: 'dd/MM/yyyy HH:mm' }}
+            </span>
+          </div>
+
+          @if (movimiento.observaciones) {
+            <p class="text-sm text-gray-600">{{ movimiento.observaciones }}</p>
+          }
+
+          <p class="text-xs uppercase text-gray-400">{{ movimiento.usuario }}</p>
+        </div>
+      </li>
+    }
+  </ol>
+} @else {
+  <p class="text-sm text-gray-500">Sin movimientos registrados.</p>
+}

@@ -15,6 +15,14 @@ export interface ResponsableActividad {
   puestoAutoriza: string | null;
 }
 
+// Municipio elegido en el buscador de origen / destino: ya trae su estado.
+export interface MunicipioElegido {
+  id: string;
+  nombre: string;
+  estadoId: string;
+  estadoNombre: string;
+}
+
 export interface CalcularDestinoQuery {
   nivelAplicacionId: string;
   municipioId: string;
@@ -45,12 +53,14 @@ export interface DestinoCaptura extends CalculoDestino {
   fechaHasta: string;
 }
 
+// Lo que se paga: con varios destinos, sólo el último (soloUltimoDestino = hay más de uno).
 export interface ResumenViaticos {
   diasComision: number;
   hospedaje: number;
   alimentos: number;
   peaje: number;
   total: number;
+  soloUltimoDestino: boolean;
 }
 
 // Nombres para mostrar en el resumen; cada paso los registra al salir de él.
@@ -59,17 +69,8 @@ export interface NombresResumen {
   actividad: string;
   estadoOrigen: string;
   municipioOrigen: string;
-  vehiculoOficial: string;
-}
-
-export interface VehiculoParticularRequest {
-  id?: string;
-  clase: number;
-  marca: string;
-  submarca: string;
-  modelo: number;
-  color: string;
-  placa: string;
+  // Vehículo elegido (oficial o particular).
+  vehiculo: string;
 }
 
 export interface CreateComisionDestinoRequest {
@@ -80,15 +81,21 @@ export interface CreateComisionDestinoRequest {
   fechaHasta: string;
 }
 
+// Borrador: sólo el trabajador es obligatorio; se manda lo que se lleve capturado.
+export type BorradorComisionRequest = Partial<CreateComisionRequest> &
+  Pick<CreateComisionRequest, 'trabajadorId'>;
+
 export interface CreateComisionRequest {
   trabajadorId: string;
+  // Sin viáticos los destinos se guardan con montos en 0.
+  conViaticos: boolean;
   direccionId: string;
   actividadId: string;
   objetivo: string;
   municipioOrigenId: string;
   tipoTransporte: number;
+  // Oficial o particular: id del vehículo en el catálogo.
   vehiculoId?: string;
-  vehiculoParticular?: VehiculoParticularRequest;
   autoriza: string;
   puestoAutoriza: string;
   destinos: CreateComisionDestinoRequest[];
@@ -112,6 +119,7 @@ export interface Comision {
   id: string;
   folio: string | null;
   estado: ComisionEstado;
+  conViaticos: boolean;
   trabajador: {
     id: string;
     numeroTrabajador: number | null;
@@ -125,19 +133,24 @@ export interface Comision {
   tipoTransporte: number | null;
   vehiculo: {
     id: string;
+    clase: number;
     marca: string;
     submarca: string;
     modelo: number;
     color: string;
     placa: string;
   } | null;
-  objetivo: string;
+  objetivo: string | null;
   autoriza: string | null;
   puestoAutoriza: string | null;
   fechaElaboracion: string;
   fechaAutorizacion: string | null;
   destinos: ComisionDestino[];
   totalViaticos: number;
+  puedeCancelar: boolean;
+  // Borrador: quien lo capturó puede editarlo, enviarlo o eliminarlo; faltantes = lo que impide enviarlo.
+  puedeEditar: boolean;
+  faltantes: string[];
   revisiones: ComisionRevision[];
   createdAt: string;
   updatedAt: string;
@@ -146,12 +159,21 @@ export interface Comision {
 export interface ComisionRevision {
   id: string;
   estado: ComisionEstado;
+  accion: AccionHistorial | null;
   observaciones: string | null;
   usuario: string;
   fecha: string;
 }
 
+export interface ConteoEstado {
+  estado: ComisionEstado;
+  total: number;
+}
+
 export type AccionRevision = 'autorizar' | 'correccion' | 'rechazar';
+
+// Cada movimiento del historial: el envío, la revisión del director o la cancelación de quien la envió.
+export type AccionHistorial = 'borrador' | 'enviar' | 'reenviar' | AccionRevision | 'cancelar';
 
 export interface RevisarComisionRequest {
   accion: AccionRevision;
@@ -160,6 +182,8 @@ export interface RevisarComisionRequest {
 
 // Lo que muestra la vista de detalle. La arman tanto el Resumen del wizard como "Ver detalles".
 export interface DetalleComisionVista {
+  // Sin viáticos no se muestra ningún monto.
+  conViaticos: boolean;
   trabajador: string;
   direccion: string;
   actividad: string;
@@ -193,4 +217,5 @@ export interface ComisionQuery extends BaseQuery {
   estado?: ComisionEstado;
   direccionId?: string;
   trabajador?: string;
+  destino?: string;
 }

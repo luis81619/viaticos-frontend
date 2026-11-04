@@ -1,13 +1,13 @@
-import { DestroyRef, Injectable, inject, signal } from '@angular/core';
+import { DestroyRef, Injectable, computed, inject, signal } from '@angular/core';
 
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { finalize } from 'rxjs';
 
-import { Comision, ComisionQuery } from '../interfaces/comision.interfaces';
+import { Comision, ComisionQuery, ConteoEstado } from '../interfaces/comision.interfaces';
 import { ComisionEstado } from '../enums/comision-estado.enum';
 import { ComisionesService } from '../services/comisiones.service';
 
-export type ComisionFilterKey = 'direccionId' | 'folio' | 'trabajador' | 'estado';
+export type ComisionFilterKey = 'direccionId' | 'folio' | 'trabajador' | 'destino' | 'estado';
 
 type ComisionFilters = Record<ComisionFilterKey, string>;
 
@@ -21,6 +21,7 @@ export class ComisionesStore {
     direccionId: '',
     folio: '',
     trabajador: '',
+    destino: '',
     estado: '',
   });
   private readonly _currentPage = signal(1);
@@ -28,8 +29,11 @@ export class ComisionesStore {
   private readonly _totalRecords = signal(0);
   private readonly _isLoading = signal(false);
   private readonly _loadError = signal<string | null>(null);
+  private readonly _conteos = signal<ConteoEstado[]>([]);
 
   readonly comisiones = this._comisiones.asReadonly();
+  readonly conteos = this._conteos.asReadonly();
+  readonly estadoSeleccionado = computed(() => this._filters().estado);
   readonly currentPage = this._currentPage.asReadonly();
   readonly pageSize = this._pageSize.asReadonly();
   readonly totalRecords = this._totalRecords.asReadonly();
@@ -40,6 +44,19 @@ export class ComisionesStore {
     this._filters.update((filters) => ({ ...filters, [key]: value }));
     this._currentPage.set(1);
     this.load();
+  }
+
+  loadConteos(): void {
+    this.comisionesService
+      .conteoPorEstado()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (response) => this._conteos.set(response.data),
+        error: (error) => {
+          console.error('Error al obtener el conteo de comisiones:', error);
+          this._conteos.set([]);
+        },
+      });
   }
 
   setPage(page: number): void {
@@ -63,6 +80,7 @@ export class ComisionesStore {
       ...(filters.direccionId && { direccionId: filters.direccionId }),
       ...(filters.folio.trim() && { folio: filters.folio.trim() }),
       ...(filters.trabajador.trim() && { trabajador: filters.trabajador.trim() }),
+      ...(filters.destino.trim() && { destino: filters.destino.trim() }),
       ...(filters.estado && { estado: Number(filters.estado) as ComisionEstado }),
     };
 

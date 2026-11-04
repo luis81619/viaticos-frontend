@@ -5,6 +5,7 @@ import {
   DestroyRef,
   OnInit,
   TemplateRef,
+  computed,
   inject,
   signal,
   viewChild,
@@ -15,9 +16,12 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 import { LucideAngularModule, PlusIcon } from 'lucide-angular';
 
+import { Role } from '../../../../core/auth/interfaces/role';
+import { SessionService } from '../../../../core/auth/services/session.service';
 import { UiBadge } from '../../../../shared/components/ui-badge/ui-badge';
 import { UiButton } from '../../../../shared/components/ui-button/ui-button';
 import { UiDataTable } from '../../../../shared/components/ui-data-table/ui-data-table';
+import { FilterChip, UiFilterChips } from '../../../../shared/components/ui-filter-chips/ui-filter-chips';
 import { UiPagination } from '../../../../shared/components/ui-pagination/ui-pagination';
 import { esDireccion } from '../../../../shared/enums/tipo-unidad.enum';
 import { SelectOption } from '../../../../shared/interfaces/select-option.interface';
@@ -28,10 +32,12 @@ import { TableActionEvent } from '../../../../shared/interfaces/table-action-eve
 
 import { PlantelesService } from '../../../catalogos/planteles/services/planteles.service';
 
+import { ComisionPanel } from '../comision-panel/comision-panel';
 import {
   COMISION_ACCIONES,
   COMISION_ACCIONES_POR_ESTADO,
   COMISION_ESTADO_OPTIONS,
+  ComisionAccion,
   ComisionEstado,
   getComisionEstadoLabel,
   getComisionEstadoVariant,
@@ -40,7 +46,7 @@ import { Comision } from '../interfaces/comision.interfaces';
 import { ComisionFilterKey, ComisionesStore } from '../store/comisiones.store';
 import { describirDireccion } from '../utils/comision.utils';
 
-const FILTROS: ComisionFilterKey[] = ['direccionId', 'folio', 'trabajador', 'estado'];
+const FILTROS: ComisionFilterKey[] = ['direccionId', 'folio', 'trabajador', 'destino', 'estado'];
 
 @Component({
   selector: 'app-comisiones-page',
@@ -51,7 +57,9 @@ const FILTROS: ComisionFilterKey[] = ['direccionId', 'folio', 'trabajador', 'est
     UiBadge,
     UiButton,
     UiDataTable,
+    UiFilterChips,
     UiPagination,
+    ComisionPanel,
   ],
   providers: [ComisionesStore],
   templateUrl: './comisiones-page.html',
@@ -61,6 +69,7 @@ export default class ComisionesPage implements OnInit, AfterViewInit {
   readonly store = inject(ComisionesStore);
   private readonly plantelesService = inject(PlantelesService);
   private readonly router = inject(Router);
+  private readonly session = inject(SessionService);
   private readonly destroyRef = inject(DestroyRef);
 
   readonly PlusIcon = PlusIcon;
@@ -83,12 +92,54 @@ export default class ComisionesPage implements OnInit, AfterViewInit {
   readonly actions: TableAction<any>[] = COMISION_ACCIONES.map((accion) => ({
     ...accion,
     visible: (row: Comision) =>
-      COMISION_ACCIONES_POR_ESTADO[row.estado as ComisionEstado]?.includes(accion.action) ?? false,
+      (COMISION_ACCIONES_POR_ESTADO[row.estado as ComisionEstado]?.includes(accion.action) ?? false) &&
+      (accion.action !== 'editar' || row.puedeEditar),
   }));
+
+  // El estado que pide acción del usuario se resalta: al director le toca revisar las por autorizar
+  // y al trabajador corregir las devueltas.
+  private readonly estadoPendiente = computed<ComisionEstado | null>(() => {
+    const roles = this.session.roles();
+    if (roles.includes(Role.DIRECTOR)) return ComisionEstado.POR_AUTORIZAR;
+    if (roles.includes(Role.TRABAJADOR)) return ComisionEstado.CORRECCION;
+    return null;
+  });
+
+  // Sólo se muestran los estados con comisiones (y el seleccionado, aunque ya no tenga).
+  readonly chipsEstado = computed<FilterChip[]>(() => {
+    const conteos = this.store.conteos();
+    const seleccionado = this.store.estadoSeleccionado();
+    const total = conteos.reduce((suma, c) => suma + c.total, 0);
+
+    const chips = COMISION_ESTADO_OPTIONS.map((opcion) => ({
+      label: opcion.label.toLowerCase(),
+      value: String(opcion.value),
+      count: conteos.find((c) => c.estado === opcion.value)?.total ?? 0,
+      destacado: opcion.value === this.estadoPendiente(),
+    })).filter((chip) => chip.count > 0 || chip.value === seleccionado);
+
+    return [{ label: 'todas', value: '', count: total }, ...chips];
+  });
 
   ngOnInit(): void {
     this.store.load();
+    this.store.loadConteos();
     this.cargarDirecciones();
+  }
+
+  // Comisión abierta en el panel lateral (al hacer clic en una fila).
+  readonly comisionSeleccionada = signal<string | null>(null);
+
+  // Tras cancelar desde el panel cambian su estado y los conteos de los botones.
+  recargar(): void {
+    this.store.load();
+    this.store.loadConteos();
+  }
+
+  onEstadoChange(estado: string): void {
+    this.store.setFilter('estado', estado);
+    // Las columnas llevan el estado elegido para que el select de la tabla quede igual que los botones.
+    this.construirColumnas();
   }
 
   ngAfterViewInit(): void {
@@ -100,15 +151,24 @@ export default class ComisionesPage implements OnInit, AfterViewInit {
   }
 
   onAction(event: TableActionEvent<any>): void {
-    if (event.action === 'ver') {
-      this.router.navigate(['/procesos/comisiones', event.row.id]);
+    switch (event.action as ComisionAccion) {
+      case 'ver':
+        this.router.navigate(['/procesos/comisiones', event.row.id]);
+        return;
+      case 'editar':
+        this.router.navigate(['/procesos/comisiones', event.row.id, 'editar']);
+        return;
     }
   }
 
   onFilterChange(event: TableFilterEvent): void {
     const key = event.key as ComisionFilterKey;
-    if (FILTROS.includes(key)) {
-      this.store.setFilter(key, String(event.value ?? ''));
+    const value = String(event.value ?? '');
+
+    if (key === 'estado') {
+      this.onEstadoChange(value);
+    } else if (FILTROS.includes(key)) {
+      this.store.setFilter(key, value);
     }
   }
 
@@ -167,7 +227,12 @@ export default class ComisionesPage implements OnInit, AfterViewInit {
       { key: 'totalViaticos', title: 'Total viáticos', align: 'right', template: this.totalTemplate() },
       { key: 'fechaElaboracion', title: 'Elaboración', template: this.fechaTemplate() },
       { key: 'fechaAutorizacion', title: 'Autorización', template: this.fechaTemplate() },
-      { key: 'destinos', title: 'Destino', template: this.destinoTemplate() },
+      {
+        key: 'destino',
+        title: 'Destino',
+        template: this.destinoTemplate(),
+        filter: { type: 'text', placeholder: 'Municipio' },
+      },
       {
         key: 'estado',
         title: 'Estado',
@@ -176,6 +241,7 @@ export default class ComisionesPage implements OnInit, AfterViewInit {
         filter: {
           type: 'select',
           options: [{ label: 'TODOS', value: '' }, ...COMISION_ESTADO_OPTIONS],
+          value: this.store.estadoSeleccionado(),
         },
       },
     ]);

@@ -23,3 +23,10 @@
     {{ resumen().total | currency: 'MXN' : 'symbol-narrow' }}
   </span>
 </div>
+
+@if (resumen().soloUltimoDestino) {
+  <p class="mt-2 text-xs text-gray-500">
+    Con varios destinos solo se paga el último (el de fecha más reciente); los anteriores forman parte
+    de la ruta.
+  </p>
+}
